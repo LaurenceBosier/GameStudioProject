@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "GSPQuestEditor",
+	"Description": "Quest editor to be used by designers to setup quests.",
+	"Category": "Other",
+	"CreatedBy": "Laurence Bosier",
+	"CreatedByURL": "www.laurence.bosier.com",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "GSPQuestEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
