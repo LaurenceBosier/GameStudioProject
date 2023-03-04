@@ -4,8 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameCore/GSPActorComponentBase.h"
-#include "GSPXpComponent.generated.h"
+#include "GSPXpDropComponent.generated.h"
 
+class UGSPMasterGameInstance;
 /* Indicates to the user interface what type of
  * interaction causes the xp to be granted */
 UENUM(BlueprintType)
@@ -14,7 +15,7 @@ enum class EXpAwardType : uint8
 	None UMETA(DisplayName = "Hide on HUD", ToolTip="When XP is granted it will not be added to the user HUD"), 
 	Interaction UMETA(DisplayName = "Interaction", ToolTip="Awarded xp will be added to HUD with the message 'Interaction +(num)xp'"),
 	Kill UMETA(DisplayName = "Enemy Kill", ToolTip="Awarded xp will be added to HUD with the message 'Enemy Kill +(num)xp'"),
-	QuestDone UMETA(DisplayName = "Quest Completion", ToolTip="Awarded xp will be added to HUD with the message 'Quest Complete +(num)xp'") 
+	QuestCompletion UMETA(DisplayName = "Quest Completion", ToolTip="Awarded xp will be added to HUD with the message 'Quest Complete +(num)xp'") 
 };
 
 /**
@@ -22,18 +23,20 @@ enum class EXpAwardType : uint8
  */
 UCLASS(Blueprintable, ClassGroup=(GSP), 
 	meta=(BlueprintSpawnableComponent))
-class GAMESTUDIOPROJECT_API UGSPXpComponent : public UGSPActorComponentBase
+class GAMESTUDIOPROJECT_API UGSPXpDropComponent : public UGSPActorComponentBase
 {
 	GENERATED_BODY()
 
 public:
 
+	virtual void BeginPlay() override;
+
 	/**
-	 * @brief Awards the player with the amount of XP points specified by the component instance
+	 * @brief Grants the player with the amount of XP points specified by the component instance
 	 * @return True if the xp was awarded to the player
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Xp Component")
-	bool AwardPlayerXP();
+	bool GrantPlayerWithXP();
 
 public:
 
@@ -42,23 +45,26 @@ public:
 	EXpAwardType XpAwardReason;
 
 	//The amount of Xp the component should grant the player
-	UPROPERTY(EditAnywhere, Category = "Xp Component")
+	UPROPERTY(EditAnywhere, Category = "Xp Component", meta = (ClampMin = "1", UIMin = "1"))
 	int XpToAward;
 
 	//If the component can award xp more than once.
-	UPROPERTY(EditAnywhere, Category = "Xp Component", AdvancedDisplay)
+	UPROPERTY(EditAnywhere, Category = "Xp Component")
 	bool bReusable = false;
 
 	//If the component can award xp an unlimited number of times.
-	UPROPERTY(EditAnywhere, Category = "Xp Component", meta = (EditCondition = "bReusable", EditConditionHides), AdvancedDisplay)
+	UPROPERTY(EditAnywhere, Category = "Xp Component", meta = (EditCondition = "bReusable", EditConditionHides))
 	bool bUnlimitedUse = false;
 
 	//The number of times the component can award xp for an action. (0 = unlimited)
-	UPROPERTY(EditAnywhere, Category = "Xp Component", meta = (EditCondition = "bReusable && !bUnlimitedUse", EditConditionHides, ClampMin = "1", UIMin = "1"), AdvancedDisplay)
+	UPROPERTY(EditAnywhere, Category = "Xp Component", meta = (EditCondition = "bReusable && !bUnlimitedUse", EditConditionHides, ClampMin = "1", UIMin = "1"))
 	int MaxUses = 1;
 
 
 private:
+
+	//Reference to the game instance
+	UGSPMasterGameInstance* MasterGameInstanceRef { nullptr };
 
 	//The number of times the component has granted the player with XP. 
 	int componentUses = 0;
