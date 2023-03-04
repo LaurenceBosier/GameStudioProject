@@ -4,8 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "Gameplay/GSPXpComponent.h"
+#include "Gameplay/GSPXpDropComponent.h"
 #include "GSPMasterGameInstance.generated.h"
+
+class UGSPInteractionComponent;
+/* Indicates to the user interface what type of
+ * interaction causes the xp to be granted */
+UENUM(BlueprintType)
+enum class EInteractionTypeMessage : uint8
+{
+	Interact UMETA(ToolTip="Displays 'Interact'on the players HUD, a general interaction message"), 
+	Open UMETA(ToolTip="Displays 'Open'on the players HUD, useful for opening chests"),
+	Push UMETA(ToolTip="Displays 'Push'on the players HUD, useful for pushable objects"),
+	Talk UMETA(ToolTip="Displays 'Talk'on the players HUD, useful for NPC interactions") 
+};
+
 
 /**
  * 
@@ -27,6 +40,39 @@ public:
 	 */
 	UFUNCTION(Category = "XP")
 	void AddPlayerXP(int InXpAmount, EXpAwardType InUserInterfacePrompt);
+
+	/**
+	 * @brief Attempts to interact with the selected actor. Safe to call whenever
+	 * @return True if the interaction was successful
+	 */
+	UFUNCTION(BlueprintCallable)
+	bool InteractWithSelectedActor();
+
+	/**
+	 * @brief Increments NumIntractableActors and displays the most recent EInteractionTypeMessage
+	 * @param InInteractionType Specifies what sort of interaction text will be displayed on the player HUD
+	 */
+	UFUNCTION()
+	void AddInteractionMessage(EInteractionTypeMessage InInteractionType);
+
+	/**
+	 * @brief Sets the selected interaction component
+	 * @param InInteractionComponent 
+	 */
+	UFUNCTION()
+	void SetSelectedInteractionComponent(UGSPInteractionComponent* InInteractionComponent);
+
+	/**
+	 * @brief Clears the selected interaction component
+	 * */
+	UFUNCTION()
+	void ClearSelectedInteractionComponent();
+
+	/**
+	 * @brief Decrements NumIntractableActors, will remove message from HUD when count falls below one
+	 */
+	UFUNCTION()
+	void RemoveInteractionMessage();
 
 
 	UFUNCTION(BlueprintCallable)
@@ -57,6 +103,14 @@ public:
 	UCurveFloat* XPLevelUpCurve; 
 
 private:
+
+	//The currently selected interaction component
+	UPROPERTY()
+	UGSPInteractionComponent* SelectedInteractionComponent { nullptr };
+
+	//The number of intractable actors the player is overlapping. 
+	UPROPERTY()
+	int NumIntractableActors { 0 };
 
 	//The amount of XP the player has in the current level
 	UPROPERTY()

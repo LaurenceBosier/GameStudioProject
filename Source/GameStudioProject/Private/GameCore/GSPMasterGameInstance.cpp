@@ -2,6 +2,8 @@
 
 #include "GameCore/GSPMasterGameInstance.h"
 
+#include "Gameplay/GSPInteractionComponent.h"
+
 void UGSPMasterGameInstance::Init()
 {
 	Super::Init();
@@ -54,6 +56,42 @@ void UGSPMasterGameInstance::AddPlayerXP(int InXpAmount, EXpAwardType InUserInte
 	}
 
 	CurrentPlayerXP += InXpAmount;
+}
+
+bool UGSPMasterGameInstance::InteractWithSelectedActor()
+{
+	if(SelectedInteractionComponent)
+	{
+		return SelectedInteractionComponent->InteractWith();
+	}
+	return false;
+}
+
+void UGSPMasterGameInstance::AddInteractionMessage(EInteractionTypeMessage InInteractionType)
+{
+	NumIntractableActors++;
+}
+
+void UGSPMasterGameInstance::RemoveInteractionMessage()
+{
+	NumIntractableActors--;
+
+	if(NumIntractableActors <= 0)
+	{
+		NumIntractableActors = 0;
+
+		//Todo start countdown to remove HUD
+	}
+}
+
+void UGSPMasterGameInstance::SetSelectedInteractionComponent(UGSPInteractionComponent* InInteractionComponent)
+{
+	SelectedInteractionComponent = InInteractionComponent;
+}
+
+void UGSPMasterGameInstance::ClearSelectedInteractionComponent()
+{
+	SelectedInteractionComponent = nullptr;
 }
 
 bool UGSPMasterGameInstance::LevelUp(int InOverflowXp, EXpAwardType InUserInterfacePrompt)
