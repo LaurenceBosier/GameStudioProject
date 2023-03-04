@@ -1,4 +1,4 @@
-// Game Studio Project Team F 2023
+// Game Studio Project Team F 2023 - Laurence Bosier
 
 #pragma once
 
@@ -7,8 +7,7 @@
 #include "GSPActorComponentBase.generated.h"
 
 
-UCLASS(Blueprintable, ClassGroup=(Custom), 
-	meta=(BlueprintSpawnableComponent),
+UCLASS(Blueprintable, ClassGroup=(GSP), 
 	HideCategories = ( 
 	    /*
 	    Default Actor Component Class that must be used in this project!
@@ -18,6 +17,10 @@ UCLASS(Blueprintable, ClassGroup=(Custom),
 		"Variable", 
 		"Sockets",
 		"Tags",
+		"HLOD",
+		"Navigation",
+		"Rendering",
+		"Physics",
 		"ComponentTick",
 		"ComponentReplication",
 		"Activation",
