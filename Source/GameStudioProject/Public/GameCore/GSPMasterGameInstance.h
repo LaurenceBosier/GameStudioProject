@@ -11,10 +11,11 @@ class UGSPInteractionComponent;
 /* Indicates to the user interface what type of
  * interaction causes the xp to be granted */
 UENUM(BlueprintType)
-enum class EInteractionTypeMessage : uint8
+enum class EInteractionPopupMessage : uint8
 {
 	Interact UMETA(ToolTip="Displays 'Interact'on the players HUD, a general interaction message"), 
 	Open UMETA(ToolTip="Displays 'Open'on the players HUD, useful for opening chests"),
+	PickUp UMETA(ToolTip="Displays 'Pick Up'on the players HUD, useful for adding physical items to the players inventory"),
 	Push UMETA(ToolTip="Displays 'Push'on the players HUD, useful for pushable objects"),
 	Talk UMETA(ToolTip="Displays 'Talk'on the players HUD, useful for NPC interactions") 
 };
@@ -31,13 +32,16 @@ class GAMESTUDIOPROJECT_API UGSPMasterGameInstance : public UGameInstance
 
 public:
 
+	/**
+	 * @brief Initializes the Xp system
+	 */
 	void Init() override;
 
 	/**
 	 * @brief Adds xp to the player and levels up when necessary
 	 * @param InXpAmount The amount of xp the player was awarded
-	 * @param InUserInterfacePrompt Responsible for setting the text on the user interface
-	 */
+	 * @param InUserInterfacePrompt The reason for adding Xp
+	*/
 	UFUNCTION(Category = "XP")
 	void AddPlayerXP(int InXpAmount, EXpAwardType InUserInterfacePrompt);
 
@@ -53,7 +57,7 @@ public:
 	 * @param InInteractionType Specifies what sort of interaction text will be displayed on the player HUD
 	 */
 	UFUNCTION()
-	void AddInteractionMessage(EInteractionTypeMessage InInteractionType);
+	void AddInteractionPopup(EInteractionPopupMessage InInteractionType);
 
 	/**
 	 * @brief Sets the selected interaction component
@@ -70,24 +74,55 @@ public:
 
 	/**
 	 * @brief Decrements NumIntractableActors, will remove message from HUD when count falls below one
+	 * @return True if there are no more intractable actors near the player
 	 */
 	UFUNCTION()
-	void RemoveInteractionMessage();
+	bool RemoveInteractionMessage();
 
+	/**
+	 * @brief Called when the interaction popup should be displayed on the players HUD
+	 * @param OutPopupMessage The type of interaction for the popup message
+	 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+	void OnAddInteractionPopup(EInteractionPopupMessage OutPopupMessage);
 
+	/**
+	 * @brief Called when the interaction popup should be removed from the player HUD
+	 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+	void OnRemoveInteractionPopup();
+
+	/**
+	 * @brief Getter for the players current level xp 
+	 * @return The CurrentPlayerXP
+	 */
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE int GetCurrentPlayerLevelXp() const { return CurrentPlayerXP; }
 
+	/**
+	 * @brief Getter for the players current level 
+	 * @return The CurrentPlayerLevel
+	 */
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE int GetCurrentPlayerLevel() const { return CurrentPlayerLevel; }
 
+	/**
+	 * @brief Getter for the required xp to level up  
+	 * @return The RequiredLevelUpXP 
+	 */
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE int GetLevelRequiredXp() const { return RequiredLevelUpXP; }
+	FORCEINLINE int GetRequiredXpForLevelUp() const { return RequiredXpForLevelUp; }
 
 	
 
 private:
 
+	/**
+	 * @brief Attempts to level the player up
+	 * @param InOverflowXp The amount of Xp gained, over the required amount of the level up
+	 * @param InUserInterfacePrompt The reason for adding Xp
+	 * @return True if the player leveled up
+	 */
 	bool LevelUp(int InOverflowXp = 0, EXpAwardType InUserInterfacePrompt= EXpAwardType::None);
 
 public:
@@ -118,9 +153,10 @@ private:
 
 	//The amount of XP the player requires to level up 
 	UPROPERTY()
-	int RequiredLevelUpXP;
+	int RequiredXpForLevelUp;
 
 	//Used to validate the data supplied by the XP curve
 	float MaxPlayerLevel;
-	float MinPlayerLevel; 
+	float MinPlayerLevel;
+
 };

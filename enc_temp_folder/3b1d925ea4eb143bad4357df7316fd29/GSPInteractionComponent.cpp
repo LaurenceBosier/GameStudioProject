@@ -40,17 +40,14 @@ void UGSPInteractionComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-
-void UGSPInteractionComponent::DestroyComponent(bool bPromoteChildren)
+void UGSPInteractionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if(GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(LookatTimerHandle))
 	{
 		GetWorld()->GetTimerManager().ClearTimer(LookatTimerHandle);
 	}
 
-	bInteractable = false;
-
-	Super::DestroyComponent(bPromoteChildren);
+	Super::EndPlay(EndPlayReason);
 }
 
 
@@ -135,7 +132,6 @@ void UGSPInteractionComponent::OnEndInteractionOverlap(UPrimitiveComponent* Over
 	//removed interaction message
 	if(bInteractionMessageShowing)
 	{
-		bInteractionMessageShowing = false;
 		MasterGameInstance->RemoveInteractionMessage();
 	}
 

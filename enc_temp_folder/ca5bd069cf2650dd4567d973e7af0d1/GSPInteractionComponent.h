@@ -51,7 +51,7 @@ public:
 
 	virtual void BeginPlay() override;
 
-	virtual void DestroyComponent(bool bPromoteChildren) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	/**
 	 * @brief Fired whenever a property is changed inside the editor defaults
@@ -75,7 +75,6 @@ protected:
 	UFUNCTION()
 	void TickLookAtRotation();
 
-	//
 	FORCEINLINE bool IsPlayerLookingAtActor() const;
 
 public:

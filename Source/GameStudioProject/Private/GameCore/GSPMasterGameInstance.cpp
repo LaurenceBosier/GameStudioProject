@@ -43,15 +43,15 @@ void UGSPMasterGameInstance::Init()
 	}
 
 	//Find the amount of XP required to level up
-	RequiredLevelUpXP = static_cast<int>(XPLevelUpCurve->GetFloatValue(CurrentPlayerLevel));
+	RequiredXpForLevelUp = static_cast<int>(XPLevelUpCurve->GetFloatValue(CurrentPlayerLevel));
 
 }
 
 void UGSPMasterGameInstance::AddPlayerXP(int InXpAmount, EXpAwardType InUserInterfacePrompt)
 {
-	if((CurrentPlayerXP + InXpAmount) >= RequiredLevelUpXP)
+	if((CurrentPlayerXP + InXpAmount) >= RequiredXpForLevelUp)
 	{
-		LevelUp((CurrentPlayerXP + InXpAmount) - RequiredLevelUpXP);
+		LevelUp((CurrentPlayerXP + InXpAmount) - RequiredXpForLevelUp);
 		return;
 	}
 
@@ -60,28 +60,44 @@ void UGSPMasterGameInstance::AddPlayerXP(int InXpAmount, EXpAwardType InUserInte
 
 bool UGSPMasterGameInstance::InteractWithSelectedActor()
 {
+	//If there is a valid Interaction Component attempt to interact with it
 	if(SelectedInteractionComponent)
 	{
+		//Return the state of the interaction. 
 		return SelectedInteractionComponent->InteractWith();
 	}
 	return false;
 }
 
-void UGSPMasterGameInstance::AddInteractionMessage(EInteractionTypeMessage InInteractionType)
+void UGSPMasterGameInstance::AddInteractionPopup(EInteractionPopupMessage InInteractionType)
 {
+	//Increment the number of intractable actors 
 	NumIntractableActors++;
+
+	//Broadcast OnAddInteractionPopup to blueprint 
+	OnAddInteractionPopup(InInteractionType);
 }
 
-void UGSPMasterGameInstance::RemoveInteractionMessage()
+bool UGSPMasterGameInstance::RemoveInteractionMessage()
 {
+	//Decrement the number of intractable actors 
 	NumIntractableActors--;
 
+	//If there are no intractable actors start a countdown to remove the interaction popup
 	if(NumIntractableActors <= 0)
 	{
 		NumIntractableActors = 0;
 
+
 		//Todo start countdown to remove HUD
+
+		//Broadcast OnRemoveInteractionPopup to blueprint 
+		OnRemoveInteractionPopup();
+
+		return true;
 	}
+
+	return false;
 }
 
 void UGSPMasterGameInstance::SetSelectedInteractionComponent(UGSPInteractionComponent* InInteractionComponent)
@@ -108,7 +124,7 @@ bool UGSPMasterGameInstance::LevelUp(int InOverflowXp, EXpAwardType InUserInterf
 
 
 	//Find the next amount of required XP 
-	RequiredLevelUpXP = static_cast<int>(XPLevelUpCurve->GetFloatValue(CurrentPlayerLevel));
+	RequiredXpForLevelUp = static_cast<int>(XPLevelUpCurve->GetFloatValue(CurrentPlayerLevel));
 
 	//Increment the players level 
 	CurrentPlayerLevel++;
