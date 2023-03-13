@@ -111,6 +111,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Interaction Component",meta = (EditCondition = "bPlayerMustBeLooking", EditConditionHides, ClampMin = "1", UIMin = "1", ClampMax = "180", UIMax = "180"))
 	int LookAngleTolerance = 14;
 
+	//The distance from the object the player can interact with the component
 	UPROPERTY(EditAnywhere, Category = "Interaction Component", meta = (ClampMin = "20", UIMin = "20", ClampMax = "4000", UIMax = "4000"))
 	int InteractionRadius = 250;
 
