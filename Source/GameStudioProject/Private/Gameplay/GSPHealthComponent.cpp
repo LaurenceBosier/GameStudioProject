@@ -1,4 +1,4 @@
-// Game Studio Project Team F 2023
+// Game Studio Project Team F 2023 - Laurence Bosier
 
 
 #include "Gameplay/GSPHealthComponent.h"
@@ -23,7 +23,7 @@ bool UGSPHealthComponent::DealDamage(AActor* Instigator, int DamageAmount)
 	UGSPHealthComponent::OnTakeDamage.Broadcast<AActor*, int>(Instigator, DamageAmount);
 
 	//If the actor is still alive 
-	if((CurrentHealth -= DamageAmount) > 0)
+	if(bInvincible || (CurrentHealth -= DamageAmount) > 0)
 	{
 		return false; 
 	}
@@ -62,3 +62,11 @@ bool UGSPHealthComponent::AddHealth(int HealthToAdd)
 
 	return false;
 }
+
+void UGSPHealthComponent::SetInvincibility(bool InNewInvincibleState)
+{
+	bInvincible = InNewInvincibleState;
+	//Broadcast to the blueprint the actors new invincibility state 
+	OnNewInvincibleState.Broadcast<bool>(InNewInvincibleState);
+}
+
