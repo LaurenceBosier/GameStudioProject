@@ -43,56 +43,62 @@ void UGSPMasterGameInstance::Init()
 	}
 
 	//Find the amount of XP required to level up
-	RequiredLevelUpXP = static_cast<int>(XPLevelUpCurve->GetFloatValue(CurrentPlayerLevel));
-
+	RequiredXpForLevelUp = static_cast<int>(XPLevelUpCurve->GetFloatValue(CurrentPlayerLevel));
 }
 
 void UGSPMasterGameInstance::AddPlayerXP(int InXpAmount, EXpAwardType InUserInterfacePrompt)
 {
-	if((CurrentPlayerXP + InXpAmount) >= RequiredLevelUpXP)
+	if((CurrentPlayerXP + InXpAmount) >= RequiredXpForLevelUp)
 	{
-		LevelUp((CurrentPlayerXP + InXpAmount) - RequiredLevelUpXP);
+		LevelUp((CurrentPlayerXP + InXpAmount) - RequiredXpForLevelUp);
 		return;
 	}
 
 	CurrentPlayerXP += InXpAmount;
 }
 
-bool UGSPMasterGameInstance::InteractWithSelectedActor()
+bool UGSPMasterGameInstance::TryInteractWithSelectedActor(APawn* Self)
 {
-	if(SelectedInteractionComponent)
+	//Return false if there are no components to interact with. 
+	if(IntractableComponents.IsEmpty())
 	{
-		return SelectedInteractionComponent->InteractWith();
+		UE_LOG(LogTemp,Warning, TEXT("No overlapped components"));
+		return false;
 	}
+
+	//Attempt to interact with each intractable component until one is valid or the end of the array  
+	for (const auto& IntractableComponent : IntractableComponents)
+	{
+		//Attempt to interact with all valid intractable components
+		if(IntractableComponent->IsPlayerObserving(Self) && IntractableComponent->TryInteractWith())
+		{
+			//break out of the loop on the first valid interaction 
+			return true;
+		}
+	}
+
+	UE_LOG(LogTemp,Warning, TEXT("No interactable components"));
+
+	//None of the components in the array could be interacted with 
 	return false;
 }
 
-void UGSPMasterGameInstance::AddInteractionMessage(EInteractionTypeMessage InInteractionType)
+void UGSPMasterGameInstance::AddInteractionPopup(EInteractionPopupMessage InInteractionType)
 {
-	NumIntractableActors++;
+	//Broadcast OnAddInteractionPopup to blueprint 
+	OnAddInteractionPopup(InInteractionType);
 }
 
-void UGSPMasterGameInstance::RemoveInteractionMessage()
+void UGSPMasterGameInstance::AddOverlappedInteractionComponent(UGSPInteractionComponent* InInteractionComponent)
 {
-	NumIntractableActors--;
-
-	if(NumIntractableActors <= 0)
-	{
-		NumIntractableActors = 0;
-
-		//Todo start countdown to remove HUD
-	}
+	IntractableComponents.AddUnique(InInteractionComponent);
 }
 
-void UGSPMasterGameInstance::SetSelectedInteractionComponent(UGSPInteractionComponent* InInteractionComponent)
+void UGSPMasterGameInstance::RemoveOverlappedInteractionComponent(UGSPInteractionComponent* InInteractionComponent)
 {
-	SelectedInteractionComponent = InInteractionComponent;
+	IntractableComponents.Remove(InInteractionComponent);
 }
 
-void UGSPMasterGameInstance::ClearSelectedInteractionComponent()
-{
-	SelectedInteractionComponent = nullptr;
-}
 
 bool UGSPMasterGameInstance::LevelUp(int InOverflowXp, EXpAwardType InUserInterfacePrompt)
 {
@@ -108,7 +114,7 @@ bool UGSPMasterGameInstance::LevelUp(int InOverflowXp, EXpAwardType InUserInterf
 
 
 	//Find the next amount of required XP 
-	RequiredLevelUpXP = static_cast<int>(XPLevelUpCurve->GetFloatValue(CurrentPlayerLevel));
+	RequiredXpForLevelUp = static_cast<int>(XPLevelUpCurve->GetFloatValue(CurrentPlayerLevel));
 
 	//Increment the players level 
 	CurrentPlayerLevel++;

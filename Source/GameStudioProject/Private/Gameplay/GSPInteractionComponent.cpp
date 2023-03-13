@@ -10,16 +10,19 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
+//Todo filter interaction overlap to player only (not just filtering by Pawn type)
+
 UGSPInteractionComponent::UGSPInteractionComponent()
 {
 	InitSphereRadius(InteractionRadius);
 	SetVisibility(true);
 	SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 	ShapeColor = FColor::Emerald;
+	
 	bHiddenInGame = true;
-
-	SetComponentTickEnabled(false);
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UGSPInteractionComponent::BeginPlay()
@@ -38,18 +41,105 @@ void UGSPInteractionComponent::BeginPlay()
 	}
 
 	Super::BeginPlay();
+
+#if WITH_EDITOR
+
+	SetHiddenInGame(!bDebugShowInteractionRadius);
+
+#endif
+
 }
 
-void UGSPInteractionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+
+void UGSPInteractionComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
-	if(GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(LookatTimerHandle))
+	SetGenerateOverlapEvents(false);
+
+	OnComponentBeginOverlap.Clear();
+	OnComponentEndOverlap.Clear();
+
+	if(MasterGameInstance)
 	{
-		GetWorld()->GetTimerManager().ClearTimer(LookatTimerHandle);
+		MasterGameInstance->RemoveOverlappedInteractionComponent(this);
 	}
 
-	Super::EndPlay(EndPlayReason);
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
 }
 
+bool UGSPInteractionComponent::TryInteractWith()
+{
+	if(bInteractable)
+	{
+		//Increment interaction count
+		InteractionCount ++;
+		
+		//Broadcast interaction event to blueprint class
+		UGSPInteractionComponent::OnInteract.Broadcast<int>(MaxInteractions - InteractionCount);
+
+		if(!bUnlimitedUse && InteractionCount >= MaxInteractions)
+		{
+			//Update intractable state if max uses has been exceeded 
+			bInteractable = false;
+
+			//Broadcast last interaction event to blueprint class
+			UGSPInteractionComponent::OnLastInteraction.Broadcast();
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+bool UGSPInteractionComponent::IsPlayerObserving(const APawn* InPlayerCharacter) const
+{
+	if(InPlayerCharacter == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No char!"));
+		return false;
+	}
+
+
+	FVector NormalizedLoc =  (this->GetOwner()->GetActorLocation() - InPlayerCharacter->GetActorLocation());
+	NormalizedLoc.Normalize();
+
+	const float Angle = FVector::DotProduct(NormalizedLoc, UKismetMathLibrary::GetForwardVector(InPlayerCharacter->GetControlRotation()));
+
+	constexpr float DirectViewTolerance = 1;
+
+	UE_LOG(LogTemp, Warning, TEXT("TolA: %f | LATL: %f"), FMath::Abs((DirectViewTolerance - Angle)) , static_cast<float>(LookAngleTolerance) / 100);
+
+
+	return FMath::Abs((DirectViewTolerance - Angle)) < static_cast<float>(LookAngleTolerance) / 100;
+}
+
+void UGSPInteractionComponent::OnBeginInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if(!MasterGameInstance)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Interaction Component: No valid master game insatnce!"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Begin overlap: %s"), *this->GetOwner()->GetActorNameOrLabel());
+
+	MasterGameInstance->AddOverlappedInteractionComponent(this);
+
+}
+
+void UGSPInteractionComponent::OnEndInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if(!MasterGameInstance)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Interaction Component: No valid master game insatnce!"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("End overlap: %s | Other: %d | Index: %d"), *this->GetOwner()->GetActorNameOrLabel(), (&OtherActor), OtherBodyIndex);
+
+	MasterGameInstance->RemoveOverlappedInteractionComponent(this);
+}
 
 void UGSPInteractionComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
@@ -63,92 +153,4 @@ void UGSPInteractionComponent::PostEditChangeProperty(FPropertyChangedEvent& Pro
 	}
 
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-}
-
-bool UGSPInteractionComponent::InteractWith()
-{
-	if(bInteractable)
-	{
-		//increment interaction count
-		NumInteractions ++;
-		
-		//Broadcast interaction event to blueprint class
-		UGSPInteractionComponent::OnInteract.Broadcast<int>(MaxInteractions - NumInteractions);
-
-		if(!bUnlimitedUse && NumInteractions >= MaxInteractions)
-		{
-			//Update intractable state if max uses has been exceeded 
-			bInteractable = false;
-
-			//Broadcast last interaction event to blueprint class
-			UGSPInteractionComponent::OnLastInteraction.Broadcast();
-		}
-
-		return true;
-	}
-	return false;
-}
-
-void UGSPInteractionComponent::OnBeginInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if(GetWorld() && !GetWorld()->GetTimerManager().IsTimerActive(LookatTimerHandle))
-	{
-		PlayerCameraComponentRef = Cast<UCameraComponent>(OtherActor->GetComponentByClass(UCameraComponent::StaticClass()));
-		if(PlayerCameraComponentRef)
-		{
-			GetWorld()->GetTimerManager().SetTimer(LookatTimerHandle, this, &UGSPInteractionComponent::TickLookatRotation ,0.04f,true, 0);
-		}
-	}
-}
-
-void UGSPInteractionComponent::OnEndInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	if(GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(LookatTimerHandle))
-	{
-		GetWorld()->GetTimerManager().ClearTimer(LookatTimerHandle);
-	}
-
-	if(MasterGameInstance && bLookingAt)
-	{
-		MasterGameInstance->RemoveInteractionMessage();
-	}
-
-	bLookingAt = false;
-}
-
-
-void UGSPInteractionComponent::TickLookatRotation()
-{
-	if(PlayerCameraComponentRef && MasterGameInstance)
-	{
-		const bool r = IsPlayerLookingAtActor();
-
-		if(!bLookingAt && r)
-		{
-			bLookingAt = true;
-			MasterGameInstance->AddInteractionMessage(InteractionMessage);
-			MasterGameInstance->SetSelectedInteractionComponent(this);
-		}
-		else if(bLookingAt && !r)
-		{
-			bLookingAt = false;
-			MasterGameInstance->RemoveInteractionMessage();
-			MasterGameInstance->ClearSelectedInteractionComponent();
-		}
-	}
-
-}
-
-bool UGSPInteractionComponent::IsPlayerLookingAtActor()
-{
-	if(PlayerCameraComponentRef && GetOwner())
-	{
-		const float a = FMath::Abs(PlayerCameraComponentRef->GetComponentRotation().Yaw);
-
-		const float b = FMath::Abs(UKismetMathLibrary::FindLookAtRotation(PlayerCameraComponentRef->GetComponentLocation(), GetOwner()->GetActorLocation()).Yaw);
-
-		return UKismetMathLibrary::InRange_FloatFloat(a, b - LookAngleTolerance, b + LookAngleTolerance);
-	}
-	return false;
 }

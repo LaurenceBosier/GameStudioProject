@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Components/SphereComponent.h"
-#include "GameCore/GSPActorComponentBase.h"
 #include "GameCore/GSPMasterGameInstance.h"
 #include "GSPInteractionComponent.generated.h"
 
@@ -52,7 +51,29 @@ public:
 
 	virtual void BeginPlay() override;
 
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+
+	bool TryInteractWith();
+
+	/**
+	 * @brief Checks if the player is looking at the owned actor 
+	 * @param InPlayerCharacter The players pawn
+	 * @return True if the player is looking at the owned actor 
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Interaction Component")
+	bool IsPlayerObserving(const APawn* InPlayerCharacter) const;
+
+protected:
+
+	//Callback function for interaction radius OnBeginOverlap. 
+	UFUNCTION()
+	void OnBeginInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	//Callback function for interaction radius OnBeginOverlap. 
+	UFUNCTION()
+	void OnEndInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+public:
 
 	/**
 	 * @brief Fired whenever a property is changed inside the editor defaults
@@ -60,22 +81,11 @@ public:
 	 */
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
-	bool InteractWith();
-
-protected:
-
-	UFUNCTION()
-	void OnBeginInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
-	void OnEndInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-	UFUNCTION()
-	void TickLookatRotation();
-
-	FORCEINLINE bool IsPlayerLookingAtActor();
-
 public:
+
+	//True if the interaction radius should be shown in PIE (play-in-editor) 
+	UPROPERTY(EditAnywhere, Category = "Interaction Component", AdvancedDisplay)
+	bool bDebugShowInteractionRadius = false;
 
 	//True if the component can be interacted with
 	UPROPERTY(EditAnywhere, Category = "Interaction Component")
@@ -83,7 +93,7 @@ public:
 
 	//The message that will be displayed on the player HUD. 
 	UPROPERTY(EditAnywhere, Category = "Interaction Component")
-	EInteractionTypeMessage InteractionMessage = EInteractionTypeMessage::Interact;
+	EInteractionPopupMessage InteractionMessage = EInteractionPopupMessage::Interact;
 
 	//True if the component can be interacted with an unlimited number of times
 	UPROPERTY(EditAnywhere, Category = "Interaction Component")
@@ -98,8 +108,8 @@ public:
 	bool bPlayerMustBeLooking = true;
 
 	//How many degrees the player can look either direction of the actor before it becomes "out of view". 
-	UPROPERTY(EditAnywhere, Category = "Interaction Component",meta = (EditCondition = "bPlayerMustBeLooking", EditConditionHides, ClampMin = "1", UIMin = "1", ClampMax = "360", UIMax = "360"))
-	int LookAngleTolerance = 8;
+	UPROPERTY(EditAnywhere, Category = "Interaction Component",meta = (EditCondition = "bPlayerMustBeLooking", EditConditionHides, ClampMin = "1", UIMin = "1", ClampMax = "180", UIMax = "180"))
+	int LookAngleTolerance = 14;
 
 	UPROPERTY(EditAnywhere, Category = "Interaction Component", meta = (ClampMin = "20", UIMin = "20", ClampMax = "4000", UIMax = "4000"))
 	int InteractionRadius = 250;
@@ -107,21 +117,19 @@ public:
 
 private:
 
+	UPROPERTY()
 	UGSPMasterGameInstance* MasterGameInstance { nullptr };
 
-	FTimerHandle LookatTimerHandle;
-
-	class UCameraComponent* PlayerCameraComponentRef;
-
-	bool bLookingAt = false;
-
-	int NumInteractions = 0;
+	//Number of times the component has been interacted with 
+	int InteractionCount = 0;
 
 	/* Declare dynamic multi-cast delegates */
 
 	DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_OneParam(FOnInteractSignature,  UGSPInteractionComponent, OnInteract, int , OutRemainingInteractions);
 
 	DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE(FOnLastInteractionSignature,  UGSPInteractionComponent, OnLastInteraction);
+
+	/* End Declare dynamic multi-cast delegates */
 
 	/* Functions bound in blueprints */
 
@@ -132,5 +140,7 @@ private:
 	//OnLastInteraction Delegate, called when the final interaction is called. 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction Component")
 	FOnLastInteractionSignature OnLastInteraction;
+
+	/* End Functions bound in blueprints */
 
 };
