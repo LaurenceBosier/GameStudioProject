@@ -51,15 +51,17 @@ public:
 
 	virtual void BeginPlay() override;
 
-	virtual void DestroyComponent(bool bPromoteChildren) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+
+	bool TryInteractWith();
 
 	/**
-	 * @brief Fired whenever a property is changed inside the editor defaults
-	 * @param PropertyChangedEvent The event fired when a property is changed inside the component 
+	 * @brief Checks if the player is looking at the owned actor 
+	 * @param InPlayerCharacter The players pawn
+	 * @return True if the player is looking at the owned actor 
 	 */
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-
-	bool InteractWith();
+	UFUNCTION(BlueprintCallable, Category = "Interaction Component")
+	bool IsPlayerObserving(const APawn* InPlayerCharacter) const;
 
 protected:
 
@@ -71,14 +73,19 @@ protected:
 	UFUNCTION()
 	void OnEndInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	//Ticks every 16ms to see if the player is looking at the actor. 
-	UFUNCTION()
-	void TickLookAtRotation();
+public:
 
-	//
-	FORCEINLINE bool IsPlayerLookingAtActor() const;
+	/**
+	 * @brief Fired whenever a property is changed inside the editor defaults
+	 * @param PropertyChangedEvent The event fired when a property is changed inside the component 
+	 */
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
 public:
+
+	//True if the interaction radius should be shown in PIE (play-in-editor) 
+	UPROPERTY(EditAnywhere, Category = "Interaction Component", AdvancedDisplay)
+	bool bDebugShowInteractionRadius = false;
 
 	//True if the component can be interacted with
 	UPROPERTY(EditAnywhere, Category = "Interaction Component")
@@ -101,8 +108,8 @@ public:
 	bool bPlayerMustBeLooking = true;
 
 	//How many degrees the player can look either direction of the actor before it becomes "out of view". 
-	UPROPERTY(EditAnywhere, Category = "Interaction Component",meta = (EditCondition = "bPlayerMustBeLooking", EditConditionHides, ClampMin = "1", UIMin = "1", ClampMax = "360", UIMax = "360"))
-	int LookAngleTolerance = 8;
+	UPROPERTY(EditAnywhere, Category = "Interaction Component",meta = (EditCondition = "bPlayerMustBeLooking", EditConditionHides, ClampMin = "1", UIMin = "1", ClampMax = "180", UIMax = "180"))
+	int LookAngleTolerance = 14;
 
 	UPROPERTY(EditAnywhere, Category = "Interaction Component", meta = (ClampMin = "20", UIMin = "20", ClampMax = "4000", UIMax = "4000"))
 	int InteractionRadius = 250;
@@ -110,18 +117,11 @@ public:
 
 private:
 
+	UPROPERTY()
 	UGSPMasterGameInstance* MasterGameInstance { nullptr };
 
-	FTimerHandle LookatTimerHandle;
-
-	class UCameraComponent* PlayerCameraComponentRef;
-
-	bool bLookingAt = false;
-
-	//If the interaction can take place
-	bool bInteractionMessageShowing = false;
-
-	int NumInteractions = 0;
+	//Number of times the component has been interacted with 
+	int InteractionCount = 0;
 
 	/* Declare dynamic multi-cast delegates */
 

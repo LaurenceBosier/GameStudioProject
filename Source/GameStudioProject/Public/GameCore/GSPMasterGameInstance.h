@@ -35,7 +35,7 @@ public:
 	/**
 	 * @brief Initializes the Xp system
 	 */
-	void Init() override;
+	virtual void Init() override;
 
 	/**
 	 * @brief Adds xp to the player and levels up when necessary
@@ -49,8 +49,8 @@ public:
 	 * @brief Attempts to interact with the selected actor. Safe to call whenever
 	 * @return True if the interaction was successful
 	 */
-	UFUNCTION(BlueprintCallable)
-	bool InteractWithSelectedActor();
+	UFUNCTION(BlueprintCallable, meta=(DefaultToSelf = InSelf, HideSelfPin))
+	bool TryInteractWithSelectedActor(APawn* InSelf);
 
 	/**
 	 * @brief Increments NumIntractableActors and displays the most recent EInteractionTypeMessage
@@ -60,24 +60,14 @@ public:
 	void AddInteractionPopup(EInteractionPopupMessage InInteractionType);
 
 	/**
-	 * @brief Sets the selected interaction component
+	 * @brief Adds a c
 	 * @param InInteractionComponent 
 	 */
 	UFUNCTION()
-	void SetSelectedInteractionComponent(UGSPInteractionComponent* InInteractionComponent);
+	void AddOverlappedInteractionComponent(UGSPInteractionComponent* InInteractionComponent);
 
-	/**
-	 * @brief Clears the selected interaction component
-	 * */
 	UFUNCTION()
-	void ClearSelectedInteractionComponent();
-
-	/**
-	 * @brief Decrements NumIntractableActors, will remove message from HUD when count falls below one
-	 * @return True if there are no more intractable actors near the player
-	 */
-	UFUNCTION()
-	bool RemoveInteractionMessage();
+	void RemoveOverlappedInteractionComponent(UGSPInteractionComponent* InInteractionComponent);
 
 	/**
 	 * @brief Called when the interaction popup should be displayed on the players HUD
@@ -92,25 +82,26 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
 	void OnRemoveInteractionPopup();
 
+
 	/**
 	 * @brief Getter for the players current level xp 
 	 * @return The CurrentPlayerXP
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "XP")
 	FORCEINLINE int GetCurrentPlayerLevelXp() const { return CurrentPlayerXP; }
 
 	/**
 	 * @brief Getter for the players current level 
 	 * @return The CurrentPlayerLevel
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "XP")
 	FORCEINLINE int GetCurrentPlayerLevel() const { return CurrentPlayerLevel; }
 
 	/**
 	 * @brief Getter for the required xp to level up  
 	 * @return The RequiredLevelUpXP 
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "XP")
 	FORCEINLINE int GetRequiredXpForLevelUp() const { return RequiredXpForLevelUp; }
 
 	
@@ -139,13 +130,9 @@ public:
 
 private:
 
-	//The currently selected interaction component
-	UPROPERTY()
-	UGSPInteractionComponent* SelectedInteractionComponent { nullptr };
-
-	//The number of intractable actors the player is overlapping. 
-	UPROPERTY()
-	int NumIntractableActors { 0 };
+	//The currently selected interaction component 
+	UPROPERTY() //UPROPERTY() insures that the pointer is set to null if there are no references left to the actor component.
+	TArray<UGSPInteractionComponent*> IntractableComponents;
 
 	//The amount of XP the player has in the current level
 	UPROPERTY()

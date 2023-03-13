@@ -44,7 +44,6 @@ void UGSPMasterGameInstance::Init()
 
 	//Find the amount of XP required to level up
 	RequiredXpForLevelUp = static_cast<int>(XPLevelUpCurve->GetFloatValue(CurrentPlayerLevel));
-
 }
 
 void UGSPMasterGameInstance::AddPlayerXP(int InXpAmount, EXpAwardType InUserInterfacePrompt)
@@ -58,57 +57,48 @@ void UGSPMasterGameInstance::AddPlayerXP(int InXpAmount, EXpAwardType InUserInte
 	CurrentPlayerXP += InXpAmount;
 }
 
-bool UGSPMasterGameInstance::InteractWithSelectedActor()
+bool UGSPMasterGameInstance::TryInteractWithSelectedActor(APawn* Self)
 {
-	//If there is a valid Interaction Component attempt to interact with it
-	if(SelectedInteractionComponent)
+	//Return false if there are no components to interact with. 
+	if(IntractableComponents.IsEmpty())
 	{
-		//Return the state of the interaction. 
-		return SelectedInteractionComponent->InteractWith();
+		UE_LOG(LogTemp,Warning, TEXT("No overlapped components"));
+		return false;
 	}
+
+	//Attempt to interact with each intractable component until one is valid or the end of the array  
+	for (const auto& IntractableComponent : IntractableComponents)
+	{
+		//Attempt to interact with all valid intractable components
+		if(IntractableComponent->IsPlayerObserving(Self) && IntractableComponent->TryInteractWith())
+		{
+			//break out of the loop on the first valid interaction 
+			return true;
+		}
+	}
+
+	UE_LOG(LogTemp,Warning, TEXT("No interactable components"));
+
+	//None of the components in the array could be interacted with 
 	return false;
 }
 
 void UGSPMasterGameInstance::AddInteractionPopup(EInteractionPopupMessage InInteractionType)
 {
-	//Increment the number of intractable actors 
-	NumIntractableActors++;
-
 	//Broadcast OnAddInteractionPopup to blueprint 
 	OnAddInteractionPopup(InInteractionType);
 }
 
-bool UGSPMasterGameInstance::RemoveInteractionMessage()
+void UGSPMasterGameInstance::AddOverlappedInteractionComponent(UGSPInteractionComponent* InInteractionComponent)
 {
-	//Decrement the number of intractable actors 
-	NumIntractableActors--;
-
-	//If there are no intractable actors start a countdown to remove the interaction popup
-	if(NumIntractableActors <= 0)
-	{
-		NumIntractableActors = 0;
-
-
-		//Todo start countdown to remove HUD
-
-		//Broadcast OnRemoveInteractionPopup to blueprint 
-		OnRemoveInteractionPopup();
-
-		return true;
-	}
-
-	return false;
+	IntractableComponents.AddUnique(InInteractionComponent);
 }
 
-void UGSPMasterGameInstance::SetSelectedInteractionComponent(UGSPInteractionComponent* InInteractionComponent)
+void UGSPMasterGameInstance::RemoveOverlappedInteractionComponent(UGSPInteractionComponent* InInteractionComponent)
 {
-	SelectedInteractionComponent = InInteractionComponent;
+	IntractableComponents.Remove(InInteractionComponent);
 }
 
-void UGSPMasterGameInstance::ClearSelectedInteractionComponent()
-{
-	SelectedInteractionComponent = nullptr;
-}
 
 bool UGSPMasterGameInstance::LevelUp(int InOverflowXp, EXpAwardType InUserInterfacePrompt)
 {
