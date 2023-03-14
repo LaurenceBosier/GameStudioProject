@@ -51,17 +51,14 @@ public:
 
 	virtual void BeginPlay() override;
 
-	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
-
 	bool TryInteractWith();
 
 	/**
 	 * @brief Checks if the player is looking at the owned actor 
-	 * @param InPlayerCharacter The players pawn
 	 * @return True if the player is looking at the owned actor 
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Interaction Component")
-	bool IsPlayerObserving(const APawn* InPlayerCharacter) const;
+	bool IsPlayerObserving() const;
 
 protected:
 

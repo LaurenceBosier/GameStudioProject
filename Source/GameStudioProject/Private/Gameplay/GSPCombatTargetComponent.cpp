@@ -45,7 +45,7 @@ void UGSPCombatTargetComponent::BeginPlay()
 	}
 
 
-	//If static attachemnt 
+	//If static attachment 
 }
 
 void UGSPCombatTargetComponent::AttemptToPopulateStaticMeshBones()

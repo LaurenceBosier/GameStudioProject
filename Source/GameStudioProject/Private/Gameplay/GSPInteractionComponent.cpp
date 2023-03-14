@@ -50,22 +50,6 @@ void UGSPInteractionComponent::BeginPlay()
 
 }
 
-
-void UGSPInteractionComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
-{
-	SetGenerateOverlapEvents(false);
-
-	OnComponentBeginOverlap.Clear();
-	OnComponentEndOverlap.Clear();
-
-	if(MasterGameInstance)
-	{
-		MasterGameInstance->RemoveOverlappedInteractionComponent(this);
-	}
-
-	Super::OnComponentDestroyed(bDestroyingHierarchy);
-}
-
 bool UGSPInteractionComponent::TryInteractWith()
 {
 	if(bInteractable)
@@ -91,8 +75,15 @@ bool UGSPInteractionComponent::TryInteractWith()
 	return false;
 }
 
-bool UGSPInteractionComponent::IsPlayerObserving(const APawn* InPlayerCharacter) const
+bool UGSPInteractionComponent::IsPlayerObserving() const
 {
+	if(GetWorld() == nullptr)
+	{
+		return false;
+	}
+
+	const auto* InPlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+
 	if(InPlayerCharacter == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("No char!"));
@@ -107,9 +98,6 @@ bool UGSPInteractionComponent::IsPlayerObserving(const APawn* InPlayerCharacter)
 
 	constexpr float DirectViewTolerance = 1;
 
-	UE_LOG(LogTemp, Warning, TEXT("TolA: %f | LATL: %f"), FMath::Abs((DirectViewTolerance - Angle)) , static_cast<float>(LookAngleTolerance) / 100);
-
-
 	return FMath::Abs((DirectViewTolerance - Angle)) < static_cast<float>(LookAngleTolerance) / 100;
 }
 
@@ -121,10 +109,7 @@ void UGSPInteractionComponent::OnBeginInteractionOverlap(UPrimitiveComponent* Ov
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Begin overlap: %s"), *this->GetOwner()->GetActorNameOrLabel());
-
 	MasterGameInstance->AddOverlappedInteractionComponent(this);
-
 }
 
 void UGSPInteractionComponent::OnEndInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -135,8 +120,6 @@ void UGSPInteractionComponent::OnEndInteractionOverlap(UPrimitiveComponent* Over
 		UE_LOG(LogTemp, Warning, TEXT("Interaction Component: No valid master game insatnce!"));
 		return;
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("End overlap: %s | Other: %d | Index: %d"), *this->GetOwner()->GetActorNameOrLabel(), (&OtherActor), OtherBodyIndex);
 
 	MasterGameInstance->RemoveOverlappedInteractionComponent(this);
 }
