@@ -67,7 +67,7 @@ private:
 	UGSPMasterGameInstance* MasterGameInstanceRef { nullptr };
 
 	//The number of times the component has granted the player with XP. 
-	int componentUses = 0;
+	int ComponentUses = 0;
 
 	//If the component is able to award the player with XP. 
 	bool bCanAwardXP = true; 

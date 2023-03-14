@@ -29,12 +29,12 @@ bool UGSPXpDropComponent::GrantPlayerWithXP()
 	}
 
 	//Increment component uses
-	componentUses++;
+	ComponentUses++;
 
 
 	if(!bUnlimitedUse)
 	{
-		if(!bReusable || componentUses >= MaxUses)
+		if(!bReusable || ComponentUses >= MaxUses)
 		{
 			bCanAwardXP = false;
 		}

@@ -2,7 +2,9 @@
 
 #include "GameCore/GSPMasterGameInstance.h"
 
+#include "Blueprint/UserWidget.h"
 #include "Gameplay/GSPInteractionComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 void UGSPMasterGameInstance::Init()
 {
@@ -46,6 +48,19 @@ void UGSPMasterGameInstance::Init()
 	RequiredXpForLevelUp = static_cast<int>(XPLevelUpCurve->GetFloatValue(CurrentPlayerLevel));
 }
 
+void UGSPMasterGameInstance::Shutdown()
+{
+	//Stop tick timer before game instance is shutdown
+	if(GetWorld())
+	{
+		if(GetWorld()->GetTimerManager().IsTimerActive(InteractionTickHandle))
+		{
+			GetTimerManager().ClearTimer(InteractionTickHandle);
+		}
+	}
+	Super::Shutdown();
+}
+
 void UGSPMasterGameInstance::AddPlayerXP(int InXpAmount, EXpAwardType InUserInterfacePrompt)
 {
 	if((CurrentPlayerXP + InXpAmount) >= RequiredXpForLevelUp)
@@ -57,12 +72,34 @@ void UGSPMasterGameInstance::AddPlayerXP(int InXpAmount, EXpAwardType InUserInte
 	CurrentPlayerXP += InXpAmount;
 }
 
-bool UGSPMasterGameInstance::TryInteractWithSelectedActor(APawn* Self)
+bool UGSPMasterGameInstance::TryCreateGamePlayHUDWidget()
+{
+	//If the HUD class has been selected
+	if(!GamePlayHUDClass)
+	{
+		return false;
+	}
+	
+	//If there isn't an existing instance 
+	if(!GamePlayHUDWidget)
+	{
+		GamePlayHUDWidget = CreateWidget<UUserWidget>(this, GamePlayHUDClass);
+
+		if(GamePlayHUDWidget) 
+		{
+			GamePlayHUDWidget->AddToViewport(-1);
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+bool UGSPMasterGameInstance::TryInteractWithSelectedActor()
 {
 	//Return false if there are no components to interact with. 
 	if(IntractableComponents.IsEmpty())
 	{
-		UE_LOG(LogTemp,Warning, TEXT("No overlapped components"));
 		return false;
 	}
 
@@ -70,35 +107,79 @@ bool UGSPMasterGameInstance::TryInteractWithSelectedActor(APawn* Self)
 	for (const auto& IntractableComponent : IntractableComponents)
 	{
 		//Attempt to interact with all valid intractable components
-		if(IntractableComponent->IsPlayerObserving(Self) && IntractableComponent->TryInteractWith())
+		if(IntractableComponent->IsPlayerObserving() && IntractableComponent->TryInteractWith())
 		{
 			//break out of the loop on the first valid interaction 
 			return true;
 		}
 	}
 
-	UE_LOG(LogTemp,Warning, TEXT("No interactable components"));
-
 	//None of the components in the array could be interacted with 
 	return false;
-}
-
-void UGSPMasterGameInstance::AddInteractionPopup(EInteractionPopupMessage InInteractionType)
-{
-	//Broadcast OnAddInteractionPopup to blueprint 
-	OnAddInteractionPopup(InInteractionType);
 }
 
 void UGSPMasterGameInstance::AddOverlappedInteractionComponent(UGSPInteractionComponent* InInteractionComponent)
 {
 	IntractableComponents.AddUnique(InInteractionComponent);
+
+	//Check if world is valid
+	if(GetWorld())
+	{
+		//If the timer is not already running start the tick function at 30fps 
+		if(!GetWorld()->GetTimerManager().IsTimerActive(InteractionTickHandle))
+		{
+			GetWorld()->GetTimerManager().SetTimer(InteractionTickHandle, this, &UGSPMasterGameInstance::InteractionObservationTick, 0.33f, true);
+		}
+	}
 }
 
 void UGSPMasterGameInstance::RemoveOverlappedInteractionComponent(UGSPInteractionComponent* InInteractionComponent)
 {
 	IntractableComponents.Remove(InInteractionComponent);
+
+	//Return if there are still components left
+	if(!IntractableComponents.IsEmpty())
+	{
+		return;
+	}
+
+	//Check if world is valid
+	if(GetWorld())
+	{
+		//If the timer is running, stop the tick timer
+		if(GetWorld()->GetTimerManager().IsTimerActive(InteractionTickHandle))
+		{
+			GetWorld()->GetTimerManager().ClearTimer(InteractionTickHandle);
+		}
+	}
+
+	//If no components are overlapped with remove the interaction pop-up 
+	OnRemoveInteractionPopup();
 }
 
+void UGSPMasterGameInstance::InteractionObservationTick()
+{
+	//Return if there are no components to check 
+	if(IntractableComponents.IsEmpty())
+	{
+		return;
+	}
+
+	//Loop through all overlapped components 
+	for (const auto& IntractableComponent : IntractableComponents)
+	{
+		//If a components is being observed return
+		if(IntractableComponent->IsPlayerObserving())
+		{
+			//Add interaction pop-up to player HUD
+			OnAddInteractionPopup(IntractableComponent->InteractionMessage);
+			return;
+		}
+	}
+
+	//If no components where observed start the prompt to remove the interaction pop-up 
+	OnRemoveInteractionPopup();
+}
 
 bool UGSPMasterGameInstance::LevelUp(int InOverflowXp, EXpAwardType InUserInterfacePrompt)
 {
