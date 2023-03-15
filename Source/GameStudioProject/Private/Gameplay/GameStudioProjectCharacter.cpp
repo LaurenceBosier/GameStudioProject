@@ -92,7 +92,10 @@ void AGameStudioProjectCharacter::SetupPlayerInputComponent(class UInputComponen
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		//Interaction
-		EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Triggered, this, &AGameStudioProjectCharacter::Interact);
+		EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Triggered, this, &AGameStudioProjectCharacter::TryInteract);
+
+		//Combat lock
+		EnhancedInputComponent->BindAction(CombatLockAction, ETriggerEvent::Triggered, this, &AGameStudioProjectCharacter::TryCombatLock);
 
 		//Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AGameStudioProjectCharacter::Move);
@@ -140,12 +143,17 @@ void AGameStudioProjectCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
-void AGameStudioProjectCharacter::Interact()
+void AGameStudioProjectCharacter::TryInteract()
 {
 	if(MasterGameInstanceRef)
 	{
 		MasterGameInstanceRef->TryInteractWithSelectedActor();
 	}
+}
+
+void AGameStudioProjectCharacter::TryCombatLock()
+{
+	UE_LOG(LogTemp, Log, TEXT("Attempt Combat Lock, (work in progress)"));
 }
 
 
