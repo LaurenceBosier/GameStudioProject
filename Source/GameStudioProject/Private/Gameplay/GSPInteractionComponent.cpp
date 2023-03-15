@@ -124,6 +124,8 @@ void UGSPInteractionComponent::OnEndInteractionOverlap(UPrimitiveComponent* Over
 	MasterGameInstance->RemoveOverlappedInteractionComponent(this);
 }
 
+#if WITH_EDITOR
+
 void UGSPInteractionComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	if(PropertyChangedEvent.Property != nullptr)
@@ -137,3 +139,5 @@ void UGSPInteractionComponent::PostEditChangeProperty(FPropertyChangedEvent& Pro
 
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
+
+#endif

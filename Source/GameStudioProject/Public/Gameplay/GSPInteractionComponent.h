@@ -72,11 +72,13 @@ protected:
 
 public:
 
+#if WITH_EDITOR
 	/**
 	 * @brief Fired whenever a property is changed inside the editor defaults
 	 * @param PropertyChangedEvent The event fired when a property is changed inside the component 
 	 */
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 
 public:
 

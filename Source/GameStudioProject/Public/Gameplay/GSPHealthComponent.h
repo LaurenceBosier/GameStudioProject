@@ -28,7 +28,7 @@ public:
 	 * @param DamageAmount The amount of damage the single attack will deal 
 	 * @return True if the actor was killed by the dealt damage 
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Health Component")
+	UFUNCTION(BlueprintCallable, Category = "Health Component", meta = (DefaultToSelf = Instigator))
 	bool DealDamage(AActor* Instigator, int DamageAmount);
 
 	/**
