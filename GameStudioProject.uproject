@@ -136,7 +136,6 @@
 		"Linux",
 		"LinuxArm64",
 		"Mac",
-		"Windows",
-		"HoloLens"
+		"Windows"
 	]
 }
