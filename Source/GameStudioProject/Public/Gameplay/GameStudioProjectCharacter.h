@@ -32,9 +32,13 @@ class AGameStudioProjectCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* JumpAction;
 
-	/** Jump Input Action */
+	/** Interaction Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* InteractionAction;
+
+	/** Combat Lock Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* CombatLockAction;
 
 	/** Move Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -57,7 +61,10 @@ protected:
 	void Look(const FInputActionValue& Value);
 
 	/** Called for interaction actions */
-	void Interact();
+	void TryInteract();
+
+	/** Called for interaction actions */
+	void TryCombatLock();
 			
 
 protected:
