@@ -19,12 +19,16 @@ bool UGSPHealthComponent::DealDamage(AActor* Instigator, int DamageAmount)
 		return true;
 	}
 
+	//Subtract health from actor
+	CurrentHealth -= DamageAmount;
+
 	//Broadcast the event to blueprints
 	UGSPHealthComponent::OnTakeDamage.Broadcast<AActor*, int>(Instigator, DamageAmount);
 
 	//If the actor is still alive 
-	if(bInvincible || (CurrentHealth -= DamageAmount) > 0)
+	if(bInvincible || CurrentHealth > 0)
 	{
+		//Return because the actor is still alive
 		return false; 
 	}
 
@@ -37,6 +41,7 @@ bool UGSPHealthComponent::DealDamage(AActor* Instigator, int DamageAmount)
 	//Broadcast OnDeath event to blueprints
 	UGSPHealthComponent::OnDeath.Broadcast<AActor*>(Instigator);
 
+	//Return true (actor is dead)
 	return true;
 }
 

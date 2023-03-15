@@ -9,6 +9,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "GameCore/GSPMasterGameInstance.h"
+#include "Kismet/GameplayStatics.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -25,7 +27,7 @@ AGameStudioProjectCharacter::AGameStudioProjectCharacter()
 	bUseControllerRotationRoll = false;
 
 	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
+	GetCharacterMovement()->bOrientRotationToMovement = false; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
@@ -64,6 +66,17 @@ void AGameStudioProjectCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+
+	if(GetWorld())
+	{
+		MasterGameInstanceRef = Cast<UGSPMasterGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	}
+
+	if(!MasterGameInstanceRef)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Faild to get UGSPMasterGameInstance referance in player character"));
+	}
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -77,6 +90,9 @@ void AGameStudioProjectCharacter::SetupPlayerInputComponent(class UInputComponen
 		//Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+
+		//Interaction
+		EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Triggered, this, &AGameStudioProjectCharacter::Interact);
 
 		//Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AGameStudioProjectCharacter::Move);
@@ -121,6 +137,14 @@ void AGameStudioProjectCharacter::Look(const FInputActionValue& Value)
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
+	}
+}
+
+void AGameStudioProjectCharacter::Interact()
+{
+	if(MasterGameInstanceRef)
+	{
+		MasterGameInstanceRef->TryInteractWithSelectedActor();
 	}
 }
 
