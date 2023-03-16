@@ -7,6 +7,7 @@
 #include "GSPXpDropComponent.generated.h"
 
 class UGSPMasterGameInstance;
+
 /* Indicates to the user interface what type of
  * interaction causes the xp to be granted */
 UENUM(BlueprintType)
@@ -15,6 +16,7 @@ enum class EXpAwardType : uint8
 	None UMETA(DisplayName = "Hide on HUD", ToolTip="When XP is granted it will not be added to the user HUD"), 
 	Interaction UMETA(DisplayName = "Interaction", ToolTip="Awarded xp will be added to HUD with the message 'Interaction +(num)xp'"),
 	Kill UMETA(DisplayName = "Enemy Kill", ToolTip="Awarded xp will be added to HUD with the message 'Enemy Kill +(num)xp'"),
+	Destroy UMETA(DisplayName = "Object Destroyed", ToolTip="Awarded xp will be added to HUD with the message 'Object Destroyed +(num)xp'"),
 	QuestCompletion UMETA(DisplayName = "Quest Completion", ToolTip="Awarded xp will be added to HUD with the message 'Quest Complete +(num)xp'") 
 };
 

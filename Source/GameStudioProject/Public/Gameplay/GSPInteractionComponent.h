@@ -4,11 +4,23 @@
 
 #include "CoreMinimal.h"
 #include "Components/SphereComponent.h"
-#include "GameCore/GSPMasterGameInstance.h"
 #include "GSPInteractionComponent.generated.h"
 
-
 class UGSPMasterGameInstance;
+
+/* Indicates to the user interface what type of
+ * interaction message should be displayed */
+UENUM(BlueprintType)
+enum class EInteractionPopupMessage : uint8
+{
+	Interact UMETA(ToolTip="Displays 'Interact'on the players HUD, a general interaction message"), 
+	Open UMETA(ToolTip="Displays 'Open'on the players HUD, useful for opening chests"),
+	PickUp UMETA(ToolTip="Displays 'Pick Up'on the players HUD, useful for adding physical items to the players inventory"),
+	Push UMETA(ToolTip="Displays 'Push'on the players HUD, useful for pushable objects"),
+	Talk UMETA(ToolTip="Displays 'Talk'on the players HUD, useful for NPC interactions") 
+};
+
+
 /**
  * 
  */
@@ -40,6 +52,7 @@ UCLASS(Blueprintable, ClassGroup=(GSP),
 		"Replication",
 		"Collision"
 		))
+
 class GAMESTUDIOPROJECT_API UGSPInteractionComponent : public USphereComponent
 {
 	GENERATED_BODY()
@@ -118,7 +131,7 @@ public:
 private:
 
 	UPROPERTY()
-	UGSPMasterGameInstance* MasterGameInstance { nullptr };
+	UGSPMasterGameInstance* MasterGameInstanceRef { nullptr };
 
 	//Number of times the component has been interacted with 
 	int InteractionCount = 0;
@@ -130,6 +143,8 @@ private:
 	DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE(FOnLastInteractionSignature,  UGSPInteractionComponent, OnLastInteraction);
 
 	/* End Declare dynamic multi-cast delegates */
+
+public:
 
 	/* Functions bound in blueprints */
 

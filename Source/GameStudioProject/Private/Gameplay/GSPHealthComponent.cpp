@@ -11,7 +11,7 @@ void UGSPHealthComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-bool UGSPHealthComponent::DealDamage(AActor* Instigator, int DamageAmount)
+bool UGSPHealthComponent::DealDamage(AActor* InInstigator, int InDamageAmount)
 {
 	//Subsiquent calls to deal damage after death will be disregarded 
 	if(bIsDead)
@@ -20,10 +20,10 @@ bool UGSPHealthComponent::DealDamage(AActor* Instigator, int DamageAmount)
 	}
 
 	//Subtract health from actor
-	CurrentHealth -= DamageAmount;
+	CurrentHealth -= InDamageAmount;
 
 	//Broadcast the event to blueprints
-	UGSPHealthComponent::OnTakeDamage.Broadcast<AActor*, int>(Instigator, DamageAmount);
+	UGSPHealthComponent::OnTakeDamage.Broadcast<AActor*, int>(InInstigator, InDamageAmount);
 
 	//If the actor is still alive 
 	if(bInvincible || CurrentHealth > 0)
@@ -39,13 +39,13 @@ bool UGSPHealthComponent::DealDamage(AActor* Instigator, int DamageAmount)
 	bIsDead = true; 
 
 	//Broadcast OnDeath event to blueprints
-	UGSPHealthComponent::OnDeath.Broadcast<AActor*>(Instigator);
+	UGSPHealthComponent::OnDeath.Broadcast<AActor*>(InInstigator);
 
 	//Return true (actor is dead)
 	return true;
 }
 
-bool UGSPHealthComponent::AddHealth(int HealthToAdd)
+bool UGSPHealthComponent::AddHealth(int InHealthToAdd)
 {
 
 	//Disregard adding health if the actor is in the dead state
@@ -55,11 +55,11 @@ bool UGSPHealthComponent::AddHealth(int HealthToAdd)
 	}
 
 	//Broadcast the event to blueprints
-	UGSPHealthComponent::OnHeal.Broadcast<int>(HealthToAdd);
+	UGSPHealthComponent::OnHeal.Broadcast<int>(InHealthToAdd);
 
 
 	//If the player is fully healed
-	if((CurrentHealth += HealthToAdd) >= MaxHealth)
+	if((CurrentHealth += InHealthToAdd) >= MaxHealth)
 	{
 		CurrentHealth = MaxHealth;
 		return true; 

@@ -9,6 +9,7 @@
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include <GameCore/GSPFunctionLibrary.h>
 
 //Todo filter interaction overlap to player only (not just filtering by Pawn type)
 
@@ -27,18 +28,12 @@ UGSPInteractionComponent::UGSPInteractionComponent()
 
 void UGSPInteractionComponent::BeginPlay()
 {
+	//Bind callback events for collision 
 	OnComponentBeginOverlap.AddDynamic(this, &UGSPInteractionComponent::OnBeginInteractionOverlap);
 	OnComponentEndOverlap.AddDynamic(this, &UGSPInteractionComponent::OnEndInteractionOverlap);
 
-	if(GetWorld())
-	{
-		MasterGameInstance = Cast<UGSPMasterGameInstance>( UGameplayStatics::GetGameInstance(GetWorld()));
-	}
-
-	if(!MasterGameInstance)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Interaction component faild to find Master Game Insatnce!"));
-	}
+	//Try set master game instance ref
+	MasterGameInstanceRef = UGSPFunctionLibrary::GetGSPGameInstance(this);
 
 	Super::BeginPlay();
 
@@ -103,25 +98,25 @@ bool UGSPInteractionComponent::IsPlayerObserving() const
 
 void UGSPInteractionComponent::OnBeginInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if(!MasterGameInstance)
+	if(!MasterGameInstanceRef)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Interaction Component: No valid master game insatnce!"));
 		return;
 	}
 
-	MasterGameInstance->AddOverlappedInteractionComponent(this);
+	MasterGameInstanceRef->AddOverlappedInteractionComponent(this);
 }
 
 void UGSPInteractionComponent::OnEndInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if(!MasterGameInstance)
+	if(!MasterGameInstanceRef)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Interaction Component: No valid master game insatnce!"));
 		return;
 	}
 
-	MasterGameInstance->RemoveOverlappedInteractionComponent(this);
+	MasterGameInstanceRef->RemoveOverlappedInteractionComponent(this);
 }
 
 #if WITH_EDITOR
