@@ -24,20 +24,20 @@ public:
 
 	/**
 	 * @brief Applies damage to the component
-	 * @param Instigator The actor dealing the damage 
-	 * @param DamageAmount The amount of damage the single attack will deal 
+	 * @param InInstigator The actor dealing the damage 
+	 * @param InDamageAmount The amount of damage the single attack will deal 
 	 * @return True if the actor was killed by the dealt damage 
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Health Component", meta = (DefaultToSelf = Instigator))
-	bool DealDamage(AActor* Instigator, int DamageAmount);
+	UFUNCTION(BlueprintCallable, Category = "Health Component", meta = (DefaultToSelf = InInstigator))
+	bool DealDamage(AActor* InInstigator, int InDamageAmount);
 
 	/**
 	 * @brief Heals the actor by a specified amount 
-	 * @param HealthToAdd The amount of health to increment by
+	 * @param InHealthToAdd The amount of health to increment by
 	 * @return True if the actor is at full health after the heal
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Health Component")
-	bool AddHealth(int HealthToAdd);
+	bool AddHealth(int InHealthToAdd);
 
 	/**
 	 * @brief Updates if the actor is currently invincible
@@ -109,7 +109,7 @@ private:
 
 	/* End dynamic multi-cast delegates */
 
-
+public:
 
 	/* Functions bound in blueprints */
 

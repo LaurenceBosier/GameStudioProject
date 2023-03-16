@@ -8,18 +8,7 @@
 #include "GSPMasterGameInstance.generated.h"
 
 class UGSPInteractionComponent;
-/* Indicates to the user interface what type of
- * interaction causes the xp to be granted */
-UENUM(BlueprintType)
-enum class EInteractionPopupMessage : uint8
-{
-	Interact UMETA(ToolTip="Displays 'Interact'on the players HUD, a general interaction message"), 
-	Open UMETA(ToolTip="Displays 'Open'on the players HUD, useful for opening chests"),
-	PickUp UMETA(ToolTip="Displays 'Pick Up'on the players HUD, useful for adding physical items to the players inventory"),
-	Push UMETA(ToolTip="Displays 'Push'on the players HUD, useful for pushable objects"),
-	Talk UMETA(ToolTip="Displays 'Talk'on the players HUD, useful for NPC interactions") 
-};
-
+enum class EInteractionPopupMessage : uint8;
 
 /**
  * 

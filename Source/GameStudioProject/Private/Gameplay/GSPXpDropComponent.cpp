@@ -2,22 +2,16 @@
 
 
 #include "Gameplay/GSPXpDropComponent.h"
+
+#include "GameCore/GSPFunctionLibrary.h"
 #include "GameCore/GSPMasterGameInstance.h"
-#include "Kismet/GameplayStatics.h"
 
 void UGSPXpDropComponent::BeginPlay()
 {
-	Super::BeginPlay();
+	//Try set master game instance ref
+	MasterGameInstanceRef = UGSPFunctionLibrary::GetGSPGameInstance(this);
 
-	if(GetWorld())
-	{
-		//Cast to the GSP game instance and increment the player XP
-		MasterGameInstanceRef = Cast<UGSPMasterGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Xp Drop component Faild to get game isnatnce ref"));
-	}
+	Super::BeginPlay();
 }
 
 bool UGSPXpDropComponent::GrantPlayerWithXP()

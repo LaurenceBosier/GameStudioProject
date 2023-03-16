@@ -14,6 +14,21 @@ void UGSPCombatTargetComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	//Try enable the LockOn trace physics collision chanel on all mesh components 
+	if(GetOwner())
+	{
+		//Loop through all owners components
+		for (const auto Component : GetOwner()->GetComponents())
+		{
+			//Check to see if the components is a mesh component
+			if(const auto MeshRef = Cast<UMeshComponent>(Component))
+			{
+				//Allow the mesh component to be hit by the LockOn trace channel
+				MeshRef->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
+			}
+		}
+	}
+
 	//Try attach the mesh to the correct socket
 	if(bAutoAttachToSkeletalMesh)
 	{
