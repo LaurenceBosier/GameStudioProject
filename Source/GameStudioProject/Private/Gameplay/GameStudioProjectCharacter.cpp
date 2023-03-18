@@ -5,11 +5,10 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
+#include "GameCore/GSPFunctionLibrary.h"
 #include "GameCore/GSPMasterGameInstance.h"
+#include "Gameplay/GSPHealthComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -32,11 +31,13 @@ AGameStudioProjectCharacter::AGameStudioProjectCharacter()
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
-	GetCharacterMovement()->JumpZVelocity = 700.f;
+	GetCharacterMovement()->JumpZVelocity = 385;
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
+	GetCharacterMovement()->Mass = 160;
+	GetCharacterMovement()->bPushForceScaledToMass = true;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -49,6 +50,8 @@ AGameStudioProjectCharacter::AGameStudioProjectCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	PlayerHealthComponent = CreateDefaultSubobject<UGSPHealthComponent>(TEXT("PlayerHealth"));
+
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
@@ -58,89 +61,138 @@ void AGameStudioProjectCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
-	//Add Input Mapping Context
-	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
-		}
-	}
+	GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed;
 
-	if(GetWorld())
-	{
-		MasterGameInstanceRef = Cast<UGSPMasterGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
-	}
+	MasterGameInstanceRef = UGSPFunctionLibrary::GetGSPGameInstance(this);
 
-	if(!MasterGameInstanceRef)
+	//Try add player HUD to screen //Todo move this to show/hide game instance creates it at init and sets to invis
+	if(MasterGameInstanceRef)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Faild to get UGSPMasterGameInstance referance in player character"));
+		MasterGameInstanceRef->TryCreateGamePlayHUDWidget();
 	}
 
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Input
-
-void AGameStudioProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
+bool AGameStudioProjectCharacter::IsAxisDeadZone(const float InScale)
 {
-	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent)) {
-		
-		//Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
-
-		//Interaction
-		EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Triggered, this, &AGameStudioProjectCharacter::TryInteract);
-
-		//Combat lock
-		EnhancedInputComponent->BindAction(CombatLockAction, ETriggerEvent::Triggered, this, &AGameStudioProjectCharacter::TryCombatLock);
-
-		//Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AGameStudioProjectCharacter::Move);
-
-		//Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AGameStudioProjectCharacter::Look);
-
+	if(InScale > 0.055 || InScale < -0.055)
+	{
+		return false;
 	}
-
+	return true;
 }
 
-void AGameStudioProjectCharacter::Move(const FInputActionValue& Value)
+void AGameStudioProjectCharacter::MoveForward(float InValue)
 {
-	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
-
-	if (Controller != nullptr)
+	if ((Controller != nullptr) && (InValue != 0.0f) && !IsAxisDeadZone(InValue))
 	{
 		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
 		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	
-		// get right vector 
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		AddMovementInput(Direction, InValue);
 	}
 }
 
-void AGameStudioProjectCharacter::Look(const FInputActionValue& Value)
+void AGameStudioProjectCharacter::MoveRight(float InValue)
 {
-	// input is a Vector2D
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
-
-	if (Controller != nullptr)
+	if ( (Controller != nullptr) && (InValue != 0.0f) && !IsAxisDeadZone(InValue))
 	{
-		// add yaw and pitch input to controller
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
+		// find out which way is right
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+	
+		// get right vector 
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		// add movement in that direction
+		AddMovementInput(Direction, InValue);
 	}
+}
+
+void AGameStudioProjectCharacter::StartSprint()
+{
+	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+}
+
+void AGameStudioProjectCharacter::StopSprint()
+{
+	GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed;
+}
+
+void AGameStudioProjectCharacter::StartCrouch()
+{
+}
+
+void AGameStudioProjectCharacter::StopCrouch()
+{
+}
+
+void AGameStudioProjectCharacter::StartBlock()
+{
+}
+
+void AGameStudioProjectCharacter::StopBlock()
+{
+}
+
+void AGameStudioProjectCharacter::TryAttack()
+{
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+// Input
+
+void AGameStudioProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
+{
+
+	check(PlayerInputComponent);
+
+	/* Action Mappings */
+
+	//Jump binding
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AGameStudioProjectCharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AGameStudioProjectCharacter::StopJumping);
+
+	//Sprint start / stop binding
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AGameStudioProjectCharacter::StartSprint);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AGameStudioProjectCharacter::StopSprint);
+
+	//Crouch / Roll, start / stop binding 
+	PlayerInputComponent->BindAction("Crouch / Roll", IE_Pressed, this, &AGameStudioProjectCharacter::StartCrouch);
+	PlayerInputComponent->BindAction("Crouch / Roll", IE_Released, this, &AGameStudioProjectCharacter::StopCrouch);
+
+	//Attack binding
+	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &AGameStudioProjectCharacter::TryAttack);
+
+	//Combat Lock binding
+	PlayerInputComponent->BindAction("Combat Lock", IE_Pressed, this, &AGameStudioProjectCharacter::TryCombatLock);
+
+	//Interact binding
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AGameStudioProjectCharacter::TryInteract);
+
+	//Block start / stop binding
+	PlayerInputComponent->BindAction("Block", IE_Pressed, this, &AGameStudioProjectCharacter::StartBlock);
+	PlayerInputComponent->BindAction("Block", IE_Released, this, &AGameStudioProjectCharacter::StopBlock);
+
+	
+
+	/* Axis Mappings */
+	
+	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &AGameStudioProjectCharacter::MoveForward);
+	PlayerInputComponent->BindAxis("Move Right / Left", this, &AGameStudioProjectCharacter::MoveRight);
+
+	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
+	// "turn" handles devices that provide an absolute delta, such as a mouse.
+	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
+	PlayerInputComponent->BindAxis("Turn Right / Left Mouse", this, &APawn::AddControllerYawInput);
+	//PlayerInputComponent->BindAxis("Turn Right / Left Gamepad", this, &AGameStudioProjectCharacter::TurnAtRate);
+	PlayerInputComponent->BindAxis("Look Up / Down Mouse", this, &APawn::AddControllerPitchInput);
+	//PlayerInputComponent->BindAxis("Look Up / Down Gamepad", this, &AGameStudioProjectCharacter::LookUpAtRate);
+	
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
 void AGameStudioProjectCharacter::TryInteract()

@@ -6,8 +6,33 @@
 #include "GameCore/GSPMasterGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 
+UActorComponent* UGSPFunctionLibrary::GetGSPComponentFromActor(AActor* InOtherActor,
+	TSubclassOf<UGSPActorComponentBase> GetComponent, EValidCheck& OutResult)
+{
+	OutResult = EValidCheck::Failed;
+
+
+	if(!IsValid(InOtherActor))
+	{
+		return nullptr;
+	}
+
+	UActorComponent* TempComponent = InOtherActor->GetComponentByClass(GetComponent);
+
+	if(TempComponent)
+	{
+		OutResult = EValidCheck::Success;
+		return TempComponent;
+	}
+
+
+	return nullptr;
+}
+
 UGSPMasterGameInstance* UGSPFunctionLibrary::GetGSPGameInstance(UObject* InWorldContextObject, EValidCheck& OutResult)
 {
+	OutResult = EValidCheck::Failed;
+
 	//Check if world is valid
 	if(InWorldContextObject && InWorldContextObject->GetWorld())
 	{
@@ -24,7 +49,6 @@ UGSPMasterGameInstance* UGSPFunctionLibrary::GetGSPGameInstance(UObject* InWorld
 	}
 
 	//Failed to get master game instance 
-	OutResult = EValidCheck::Failed;
 	return nullptr;
 }
 

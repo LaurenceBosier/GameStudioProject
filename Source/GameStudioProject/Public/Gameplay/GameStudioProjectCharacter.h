@@ -4,14 +4,85 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "InputActionValue.h"
 #include "GameStudioProjectCharacter.generated.h"
 
 
 UCLASS(config=Game)
 class AGameStudioProjectCharacter : public ACharacter
 {
+
+protected:
+
 	GENERATED_BODY()
+
+	AGameStudioProjectCharacter();
+
+	// To add mapping context
+	virtual void BeginPlay();
+
+	// APawn interface
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+;
+
+protected:
+
+	/**
+	 * @brief Checks if the input scale is out of the defined stick dead-zone
+	 * @return True if InScale is in the axis dead-zone
+	 */
+	FORCEINLINE bool IsAxisDeadZone(const float InScale);
+
+	/** Called for forwards/backward input */
+	void MoveForward(float InValue);
+
+	/** Called for side to side input */
+	void MoveRight(float InValue);
+
+	void StartSprint();
+
+	void StopSprint();
+
+	void StartCrouch(); //Todo if pressed in quick succession you should roll and return to previous state
+
+	void StopCrouch();
+
+	void StartBlock();
+
+	void StopBlock();
+
+	void TryAttack();
+
+	/** Called for interaction actions */
+	void TryInteract();
+
+	/** Called for interaction actions */
+	void TryCombatLock();
+
+
+public:
+
+	UPROPERTY(EditDefaultsOnly, Category = "Player Stats")
+	float DefaultWalkSpeed = 425;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Player Stats")
+	float SprintSpeed = 630;
+
+
+	UPROPERTY()
+	class UGSPMasterGameInstance* MasterGameInstanceRef;
+
+	/** Returns CameraBoom subobject **/
+	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+	/** Returns FollowCamera subobject **/
+	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	/** Returns Players health component **/
+	FORCEINLINE class UGSPHealthComponent* GetPlayerHealthComponent() const { return PlayerHealthComponent; }
+
+private:
+
+	/* Player Health Component */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player Stats", meta = (AllowPrivateAccess = "true"))
+	class UGSPHealthComponent* PlayerHealthComponent;
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -20,64 +91,5 @@ class AGameStudioProjectCharacter : public ACharacter
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
-
-	UPROPERTY()
-	class UGSPMasterGameInstance* MasterGameInstanceRef;
-	
-	/** MappingContext */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputMappingContext* DefaultMappingContext;
-
-	/** Jump Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* JumpAction;
-
-	/** Interaction Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* InteractionAction;
-
-	/** Combat Lock Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* CombatLockAction;
-
-	/** Move Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* MoveAction;
-
-	/** Look Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* LookAction;
-
-public:
-	AGameStudioProjectCharacter();
-	
-
-protected:
-
-	/** Called for movement input */
-	void Move(const FInputActionValue& Value);
-
-	/** Called for looking input */
-	void Look(const FInputActionValue& Value);
-
-	/** Called for interaction actions */
-	void TryInteract();
-
-	/** Called for interaction actions */
-	void TryCombatLock();
-			
-
-protected:
-	// APawn interface
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
-	// To add mapping context
-	virtual void BeginPlay();
-
-public:
-	/** Returns CameraBoom subobject **/
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	/** Returns FollowCamera subobject **/
-	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 };
 

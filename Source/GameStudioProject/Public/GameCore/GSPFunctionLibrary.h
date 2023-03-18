@@ -23,6 +23,15 @@ class GAMESTUDIOPROJECT_API UGSPFunctionLibrary : public UBlueprintFunctionLibra
 	GENERATED_BODY()
 
 public:
+	/**
+	 * @brief Try's to get the GSP actor component from the inputted actor
+	 * @param InOtherActor The actor you want to try and get the component from
+	 * @param GetComponent The component type you are trying to get from the actor
+	 * @param OutResult If the component was gotten successfully
+	 * @return The found instance of the component, or nullptr if no component was found on the actor 
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Game Studio Project Utility", meta =(ExpandEnumAsExecs = "OutResult", DeterminesOutputType = "GetComponent"))
+	static class UActorComponent* GetGSPComponentFromActor(AActor* InOtherActor, class TSubclassOf<class UGSPActorComponentBase> GetComponent, EValidCheck& OutResult);
 
 	/**
 	 * @brief Attempts to get the UGSPMasterGameInstance 
