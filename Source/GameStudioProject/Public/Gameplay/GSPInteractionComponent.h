@@ -39,14 +39,20 @@ public:
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	/**
+	 * @brief Attempt to interact with the component
+	 * @return True if the interaction was fulfilled successfully
+	 */
 	bool TryInteractWith();
 
 	/**
-	 * @brief Checks if the player is looking at the owned actor 
+	 * @brief Checks if the player is looking at the owned actor
+	 * @param InCameraLocation The player cameras world location
+	 * @param InCameraForwardVector The player camera actors forward vector
 	 * @return True if the player is looking at the owned actor 
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Interaction Component")
-	bool IsPlayerObserving() const;
+	bool IsPlayerObserving(FVector InCameraLocation, FVector InCameraForwardVector) const;
 
 protected:
 
@@ -58,6 +64,8 @@ protected:
 	UFUNCTION()
 	void OnEndInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	//Creates and registers the sphere collision component required for overlap events
+	UFUNCTION()
 	void RegisterCollisionComponent();
 
 public:
@@ -102,7 +110,7 @@ public:
 
 	//The distance from the object the player can interact with the component
 	UPROPERTY(EditAnywhere, Category = "Interaction Component", meta = (ClampMin = "20", UIMin = "20", ClampMax = "4000", UIMax = "4000"))
-	int InteractionRadius = 250;
+	int InteractionRadius = 120;
 
 
 private:
