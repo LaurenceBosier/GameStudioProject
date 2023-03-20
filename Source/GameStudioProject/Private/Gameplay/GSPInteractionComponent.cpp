@@ -3,46 +3,45 @@
 
 #include "Gameplay/GSPInteractionComponent.h"
 
-#include "Camera/CameraComponent.h"
-#include "Camera/CameraModifier.h"
 #include "GameCore/GSPMasterGameInstance.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "DrawDebugHelpers.h"
 #include <GameCore/GSPFunctionLibrary.h>
 
 //Todo filter interaction overlap to player only (not just filtering by Pawn type)
 
 UGSPInteractionComponent::UGSPInteractionComponent()
 {
-	InitSphereRadius(InteractionRadius);
-	SetVisibility(true);
-	SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	ShapeColor = FColor::Emerald;
-	
-	bHiddenInGame = true;
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+
 void UGSPInteractionComponent::BeginPlay()
 {
-	//Bind callback events for collision 
-	OnComponentBeginOverlap.AddDynamic(this, &UGSPInteractionComponent::OnBeginInteractionOverlap);
-	OnComponentEndOverlap.AddDynamic(this, &UGSPInteractionComponent::OnEndInteractionOverlap);
+	Super::BeginPlay();
 
 	//Try set master game instance ref
 	MasterGameInstanceRef = UGSPFunctionLibrary::GetGSPGameInstance(this);
 
-	Super::BeginPlay();
+	//Create interaction overlap collider
+	RegisterCollisionComponent();
 
 #if WITH_EDITOR
 
-	SetHiddenInGame(!bDebugShowInteractionRadius);
+	InteractionRadiusCollider->SetHiddenInGame(!bDebugShowInteractionRadius);
 
 #endif
 
+}
+
+
+void UGSPInteractionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	InteractionRadiusCollider->UnregisterComponent();
+
+	Super::EndPlay(EndPlayReason);
 }
 
 bool UGSPInteractionComponent::TryInteractWith()
@@ -70,7 +69,7 @@ bool UGSPInteractionComponent::TryInteractWith()
 	return false;
 }
 
-bool UGSPInteractionComponent::IsPlayerObserving() const
+bool UGSPInteractionComponent::IsPlayerObserving() const //Todo fix this
 {
 	if(GetWorld() == nullptr)
 	{
@@ -85,15 +84,18 @@ bool UGSPInteractionComponent::IsPlayerObserving() const
 		return false;
 	}
 
+	FVector EyeLocation; 
+	FRotator EyeRotation;
 
-	FVector NormalizedLoc =  (this->GetOwner()->GetActorLocation() - InPlayerCharacter->GetActorLocation());
+	InPlayerCharacter->GetActorEyesViewPoint(EyeLocation,EyeRotation);
+
+	FVector NormalizedLoc = (InteractionRadiusCollider->GetComponentToWorld().GetLocation() - EyeLocation);
+
 	NormalizedLoc.Normalize();
 
-	const float Angle = FVector::DotProduct(NormalizedLoc, UKismetMathLibrary::GetForwardVector(InPlayerCharacter->GetControlRotation()));
+	const float Angle = FMath::Abs(FVector::DotProduct(NormalizedLoc, UKismetMathLibrary::GetForwardVector(InPlayerCharacter->GetControlRotation())));
 
-	constexpr float DirectViewTolerance = 1;
-
-	return FMath::Abs((DirectViewTolerance - Angle)) < static_cast<float>(LookAngleTolerance) / 100;
+	return (1 - Angle) < static_cast<float>(LookAngleTolerance) / 100;
 }
 
 void UGSPInteractionComponent::OnBeginInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -119,6 +121,47 @@ void UGSPInteractionComponent::OnEndInteractionOverlap(UPrimitiveComponent* Over
 	MasterGameInstanceRef->RemoveOverlappedInteractionComponent(this);
 }
 
+void UGSPInteractionComponent::RegisterCollisionComponent()
+{
+	InteractionRadiusCollider = NewObject<USphereComponent>(GetOwner(), TEXT("Interaction radius v2"));
+
+	InteractionRadiusCollider->SetupAttachment(GetOwner()->GetRootComponent());
+
+	InteractionRadiusCollider->CreationMethod = EComponentCreationMethod::Native;
+
+	InteractionRadiusCollider->ShapeColor = FColor::Emerald;
+
+	InteractionRadiusCollider->bHiddenInGame = false;
+
+	InteractionRadiusCollider->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	InteractionRadiusCollider->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+
+	//Bind callback events for collision 
+	InteractionRadiusCollider->OnComponentBeginOverlap.AddDynamic(this, &UGSPInteractionComponent::OnBeginInteractionOverlap);
+	InteractionRadiusCollider->OnComponentEndOverlap.AddDynamic(this, &UGSPInteractionComponent::OnEndInteractionOverlap);
+
+	//Find the center of the owned actor (based on collision components) and set the interaction collision to that location
+	if(GetOwner() && GetOwner()->GetRootComponent())
+	{
+		InteractionRadiusCollider->InitSphereRadius(InteractionRadius);
+
+		InteractionRadiusCollider->SetupAttachment(GetOwner()->GetRootComponent());
+
+		FVector ActorCenter, UselessExtent;
+
+		GetOwner()->GetActorBounds(true, ActorCenter, UselessExtent);
+
+		//World location to Relative location 
+		ActorCenter = UKismetMathLibrary::InverseTransformLocation(GetOwner()->GetActorTransform(), ActorCenter);
+
+		//Set the relative location of the collision sphere to the center of owner actor
+		InteractionRadiusCollider->SetRelativeLocation(ActorCenter);
+	}
+
+	//Register the component in the game
+	InteractionRadiusCollider->RegisterComponent();
+}
+
 #if WITH_EDITOR
 
 void UGSPInteractionComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
@@ -128,7 +171,17 @@ void UGSPInteractionComponent::PostEditChangeProperty(FPropertyChangedEvent& Pro
 		const FName PropertyName(PropertyChangedEvent.Property->GetFName());
 		if (PropertyName == GET_MEMBER_NAME_CHECKED(UGSPInteractionComponent, InteractionRadius))
 		{
-			SetSphereRadius(InteractionRadius);
+			if(GetOwner() && GetOwner()->GetRootComponent())
+			{
+				FVector ActorCenter, UselessExtent;
+
+				GetOwner()->GetActorBounds(true, ActorCenter, UselessExtent);
+
+				if(GetWorld())
+				{
+					DrawDebugSphere(GetWorld(), ActorCenter, InteractionRadius, 12, FColor::Cyan, false, 0.2f, 0, 2);
+				}
+			}
 		}
 	}
 

@@ -28,9 +28,18 @@ UCLASS(Blueprintable, ClassGroup=(GSP),
 		"Events",
 		"AssetUserData",
 		"Replication",
-		"Collision"
+		"Collision",
+		"Transform", 
+		"Shape", 
+		"Mobile", 
+		"RayTracing",
+		"LOD",
+		"StaticMesh",
+		"TextureStreaming",
+		"MaterialParameters",
+		"VirtualTexture",
+		"Lighting"
 		))
-
 class GAMESTUDIOPROJECT_API UGSPActorComponentBase : public UActorComponent
 {
 	GENERATED_BODY()

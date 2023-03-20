@@ -4,7 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/SphereComponent.h"
+#include "GameCore/GSPActorComponentBase.h"
 #include "GSPInteractionComponent.generated.h"
+
+//Todo remove this as an 
 
 class UGSPMasterGameInstance;
 
@@ -20,49 +23,21 @@ enum class EInteractionPopupMessage : uint8
 	Talk UMETA(ToolTip="Displays 'Talk'on the players HUD, useful for NPC interactions") 
 };
 
-
 /**
  * 
  */
-UCLASS(Blueprintable, ClassGroup=(GSP), 
-	meta=(BlueprintSpawnableComponent),
-	HideCategories = ( 
-	    /*
-	    Default Actor Component Class that must be used in this project!
-		Hides all default categories from the editor inspector,
-		IMPORTANT: Starts with Tick() disabled by default
-		*/
-		"Variable", 
-		"Transform", 
-		"Shape", 
-		"Navigation", 
-		"HLOD", 
-		"Rendering", 
-		"Physics", 
-		"Mobile", 
-		"RayTracing", 
-		"Sockets",
-		"Tags",
-		"ComponentTick",
-		"ComponentReplication",
-		"Activation",
-		"Cooking",
-		"Events",
-		"AssetUserData",
-		"Replication",
-		"Collision"
-		))
-
-class GAMESTUDIOPROJECT_API UGSPInteractionComponent : public USphereComponent
+UCLASS(Blueprintable, ClassGroup=(GSP), meta=(BlueprintSpawnableComponent))
+class GAMESTUDIOPROJECT_API UGSPInteractionComponent : public UGSPActorComponentBase
 {
 	GENERATED_BODY()
-
 
 public:
 
 	UGSPInteractionComponent();
 
 	virtual void BeginPlay() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	bool TryInteractWith();
 
@@ -82,6 +57,8 @@ protected:
 	//Callback function for interaction radius OnBeginOverlap. 
 	UFUNCTION()
 	void OnEndInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	void RegisterCollisionComponent();
 
 public:
 
@@ -130,8 +107,13 @@ public:
 
 private:
 
+	//Cached game instance ref
 	UPROPERTY()
 	UGSPMasterGameInstance* MasterGameInstanceRef { nullptr };
+
+	//The collision sphere used to generate overlap events. 
+	UPROPERTY()
+	USphereComponent* InteractionRadiusCollider { nullptr };
 
 	//Number of times the component has been interacted with 
 	int InteractionCount = 0;

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/StaticMeshComponent.h"
+#include "GameCore/GSPActorComponentBase.h"
 #include "GSPCombatTargetComponent.generated.h"
 
 /**
@@ -32,7 +32,6 @@ UCLASS(Blueprintable, ClassGroup=(GSP),
 		"ComponentReplication",
 		"Activation",
 		"Cooking",
-		"Events",
 		"AssetUserData",
 		"Replication",
 		"Collision",
@@ -43,7 +42,7 @@ UCLASS(Blueprintable, ClassGroup=(GSP),
 		"VirtualTexture",
 		"Lighting"
 		))
-class GAMESTUDIOPROJECT_API UGSPCombatTargetComponent : public UStaticMeshComponent
+class GAMESTUDIOPROJECT_API UGSPCombatTargetComponent : public UGSPActorComponentBase
 {
 	GENERATED_BODY()
 
