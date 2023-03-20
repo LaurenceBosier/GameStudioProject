@@ -8,6 +8,9 @@
 
 void UGSPMasterGameInstance::Init()
 {
+
+	OnPawnControllerChangedDelegates.AddUniqueDynamic(this, &UGSPMasterGameInstance::OnPawnControllerChanged);
+
 	Super::Init();
 
 	//Throw error if no level up curve is defined 
@@ -50,6 +53,8 @@ void UGSPMasterGameInstance::Init()
 
 void UGSPMasterGameInstance::Shutdown()
 {
+	OnPawnControllerChangedDelegates.Clear();
+
 	//Stop tick timer before game instance is shutdown
 	if(GetWorld())
 	{
@@ -59,6 +64,12 @@ void UGSPMasterGameInstance::Shutdown()
 		}
 	}
 	Super::Shutdown();
+}
+
+void UGSPMasterGameInstance::OnPawnControllerChanged(APawn* InPawn, AController* InController)
+{
+	//When the player possesses a new pawn, update the camera manager ref
+	CameraManagerRef = GetFirstLocalPlayerController()->PlayerCameraManager;
 }
 
 void UGSPMasterGameInstance::AddPlayerXP(int InXpAmount, EXpAwardType InUserInterfacePrompt)
@@ -98,7 +109,7 @@ bool UGSPMasterGameInstance::TryCreateGamePlayHUDWidget()
 bool UGSPMasterGameInstance::TryInteractWithSelectedActor()
 {
 	//Return false if there are no components to interact with. 
-	if(IntractableComponents.IsEmpty())
+	if(IntractableComponents.IsEmpty() || !IsValid(CameraManagerRef))
 	{
 		return false;
 	}
@@ -107,7 +118,7 @@ bool UGSPMasterGameInstance::TryInteractWithSelectedActor()
 	for (const auto& IntractableComponent : IntractableComponents)
 	{
 		//Attempt to interact with all valid intractable components
-		if(IntractableComponent->IsPlayerObserving() && IntractableComponent->TryInteractWith())
+		if(IntractableComponent->IsPlayerObserving(CameraManagerRef->GetCameraLocation(), CameraManagerRef->GetActorForwardVector()) && IntractableComponent->TryInteractWith())
 		{
 			//break out of the loop on the first valid interaction 
 			return true;
@@ -125,7 +136,7 @@ void UGSPMasterGameInstance::AddOverlappedInteractionComponent(UGSPInteractionCo
 	//Check if world is valid
 	if(GetWorld())
 	{
-		//If the timer is not already running start the tick function at 30fps 
+		//If the timer is not already running start the tick function at 3fps 
 		if(!GetWorld()->GetTimerManager().IsTimerActive(InteractionTickHandle))
 		{
 			GetWorld()->GetTimerManager().SetTimer(InteractionTickHandle, this, &UGSPMasterGameInstance::InteractionObservationTick, 0.33f, true);
@@ -160,20 +171,36 @@ void UGSPMasterGameInstance::RemoveOverlappedInteractionComponent(UGSPInteractio
 void UGSPMasterGameInstance::InteractionObservationTick()
 {
 	//Return if there are no components to check 
-	if(IntractableComponents.IsEmpty())
+	if(IntractableComponents.IsEmpty() || !GetWorld())
 	{
+		//Remove interaction pop-up
+		OnRemoveInteractionPopup();
+
+		//Check if world is valid
+		if(GetWorld())
+		{
+			//If the timer is running, stop the tick timer
+			if(GetWorld()->GetTimerManager().IsTimerActive(InteractionTickHandle))
+			{
+				GetWorld()->GetTimerManager().ClearTimer(InteractionTickHandle);
+			}
+		}
+		//Cancel out of function
 		return;
 	}
 
-	//Loop through all overlapped components 
-	for (const auto& IntractableComponent : IntractableComponents)
+	if(IsValid(CameraManagerRef))
 	{
-		//If a components is being observed return
-		if(IntractableComponent->IsPlayerObserving())
+		//Loop through all overlapped components
+		for (const auto& IntractableComponent : IntractableComponents)
 		{
-			//Add interaction pop-up to player HUD
-			OnAddInteractionPopup(IntractableComponent->InteractionMessage);
-			return;
+			//If a components is being observed return
+			if(IntractableComponent->IsPlayerObserving(CameraManagerRef->GetCameraLocation(), CameraManagerRef->GetActorForwardVector()))
+			{
+				//Add interaction pop-up to player HUD
+				OnAddInteractionPopup(IntractableComponent->InteractionMessage);
+				return;
+			}
 		}
 	}
 

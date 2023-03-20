@@ -17,7 +17,6 @@ UGSPInteractionComponent::UGSPInteractionComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-
 void UGSPInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -35,7 +34,6 @@ void UGSPInteractionComponent::BeginPlay()
 #endif
 
 }
-
 
 void UGSPInteractionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
@@ -69,33 +67,16 @@ bool UGSPInteractionComponent::TryInteractWith()
 	return false;
 }
 
-bool UGSPInteractionComponent::IsPlayerObserving() const //Todo fix this
+bool UGSPInteractionComponent::IsPlayerObserving(FVector InCameraLocation, FVector InCameraForwardVector) const 
 {
-	if(GetWorld() == nullptr)
-	{
-		return false;
-	}
-
-	const auto* InPlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-
-	if(InPlayerCharacter == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("No char!"));
-		return false;
-	}
-
-	FVector EyeLocation; 
-	FRotator EyeRotation;
-
-	InPlayerCharacter->GetActorEyesViewPoint(EyeLocation,EyeRotation);
-
-	FVector NormalizedLoc = (InteractionRadiusCollider->GetComponentToWorld().GetLocation() - EyeLocation);
+	FVector NormalizedLoc = (InteractionRadiusCollider->GetComponentToWorld().GetLocation() - InCameraLocation);
 
 	NormalizedLoc.Normalize();
 
-	const float Angle = FMath::Abs(FVector::DotProduct(NormalizedLoc, UKismetMathLibrary::GetForwardVector(InPlayerCharacter->GetControlRotation())));
+	const int Angle = FMath::Acos(FMath::Abs(FVector::DotProduct(NormalizedLoc, InCameraForwardVector))) * 100;
 
-	return (1 - Angle) < static_cast<float>(LookAngleTolerance) / 100;
+	//Return true if the players view angle is less than the allowed view distance
+	return Angle < (LookAngleTolerance + 1);
 }
 
 void UGSPInteractionComponent::OnBeginInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -125,7 +106,7 @@ void UGSPInteractionComponent::RegisterCollisionComponent()
 {
 	InteractionRadiusCollider = NewObject<USphereComponent>(GetOwner(), TEXT("Interaction radius v2"));
 
-	InteractionRadiusCollider->SetupAttachment(GetOwner()->GetRootComponent());
+	InteractionRadiusCollider->SetAbsolute(false,false,true);
 
 	InteractionRadiusCollider->CreationMethod = EComponentCreationMethod::Native;
 
@@ -137,8 +118,8 @@ void UGSPInteractionComponent::RegisterCollisionComponent()
 	InteractionRadiusCollider->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 
 	//Bind callback events for collision 
-	InteractionRadiusCollider->OnComponentBeginOverlap.AddDynamic(this, &UGSPInteractionComponent::OnBeginInteractionOverlap);
-	InteractionRadiusCollider->OnComponentEndOverlap.AddDynamic(this, &UGSPInteractionComponent::OnEndInteractionOverlap);
+	InteractionRadiusCollider->OnComponentBeginOverlap.AddUniqueDynamic(this, &UGSPInteractionComponent::OnBeginInteractionOverlap);
+	InteractionRadiusCollider->OnComponentEndOverlap.AddUniqueDynamic(this, &UGSPInteractionComponent::OnEndInteractionOverlap);
 
 	//Find the center of the owned actor (based on collision components) and set the interaction collision to that location
 	if(GetOwner() && GetOwner()->GetRootComponent())
@@ -179,7 +160,7 @@ void UGSPInteractionComponent::PostEditChangeProperty(FPropertyChangedEvent& Pro
 
 				if(GetWorld())
 				{
-					DrawDebugSphere(GetWorld(), ActorCenter, InteractionRadius, 12, FColor::Cyan, false, 0.2f, 0, 2);
+					DrawDebugSphere(GetWorld(), ActorCenter, InteractionRadius, 16, FColor::Emerald, false, 0.2f, 0, 2);
 				}
 			}
 		}

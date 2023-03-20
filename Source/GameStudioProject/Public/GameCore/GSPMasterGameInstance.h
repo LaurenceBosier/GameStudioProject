@@ -32,6 +32,14 @@ public:
 	virtual void Shutdown() override;
 
 	/**
+	 * @brief Called when the player controller possesses a new pawn
+	 * @param InPawn New possessed pawn
+	 * @param InController Possessing player controller 
+	 */
+	UFUNCTION()
+	void OnPawnControllerChanged(APawn* InPawn, AController* InController);
+
+	/**
 	 * @brief Adds xp to the player and levels up when necessary
 	 * @param InXpAmount The amount of xp the player was awarded
 	 * @param InUserInterfacePrompt The reason for adding Xp
@@ -84,7 +92,7 @@ public:
 private:
 
 	/**
-	 * @brief Ticks at 30fps to see if the player is looking at any overlapped intractable components 
+	 * @brief Ticks at 3fps to see if the player is looking at any overlapped intractable components 
 	 */
 	UFUNCTION()
 	void InteractionObservationTick();
@@ -154,6 +162,9 @@ private:
 	//Timer used to tick if the player is looking at any intractable components 
 	FTimerHandle InteractionTickHandle;
 
+	//A reference to the player camera manager
+	TObjectPtr<APlayerCameraManager> CameraManagerRef;
+
 	//The amount of XP the player has in the current level
 	UPROPERTY()
 	int CurrentPlayerXP;
@@ -163,7 +174,6 @@ private:
 	int RequiredXpForLevelUp;
 
 	//Used to validate the data supplied by the XP curve
-	float MaxPlayerLevel;
-	float MinPlayerLevel;
+	float MaxPlayerLevel, MinPlayerLevel;
 
 };
