@@ -3,6 +3,8 @@
 
 #include "Gameplay/GSPCombatTargetComponent.h"
 
+//Test merge
+
 
 UGSPCombatTargetComponent::UGSPCombatTargetComponent()
 {
