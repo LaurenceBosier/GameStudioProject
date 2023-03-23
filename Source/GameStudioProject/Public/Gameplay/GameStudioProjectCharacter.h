@@ -65,6 +65,12 @@ protected:
 	/** Called for interaction actions */
 	void TryCombatLock();
 
+	/** Called for interaction actions */
+	void ToggleInventory();
+
+	/** Called for interaction actions */
+	void ToggleMap();
+
 
 public:
 

@@ -7,8 +7,6 @@
 #include "GameCore/GSPActorComponentBase.h"
 #include "GSPInteractionComponent.generated.h"
 
-//Todo remove this as an 
-
 class UGSPMasterGameInstance;
 
 /* Indicates to the user interface what type of
@@ -20,7 +18,9 @@ enum class EInteractionPopupMessage : uint8
 	Open UMETA(ToolTip="Displays 'Open'on the players HUD, useful for opening chests"),
 	PickUp UMETA(ToolTip="Displays 'Pick Up'on the players HUD, useful for adding physical items to the players inventory"),
 	Push UMETA(ToolTip="Displays 'Push'on the players HUD, useful for pushable objects"),
-	Talk UMETA(ToolTip="Displays 'Talk'on the players HUD, useful for NPC interactions") 
+	Talk UMETA(ToolTip="Displays 'Talk'on the players HUD, useful for NPC interactions"),
+	Use UMETA(ToolTip="Displays 'Use'on the players HUD, useful for NPC interactions"),
+	UseRequiredItem UMETA(ToolTip="Displays 'Use (required item(s)'on the players HUD, useful for NPC interactions") 
 };
 
 /**

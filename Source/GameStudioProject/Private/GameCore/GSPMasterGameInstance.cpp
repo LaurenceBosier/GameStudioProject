@@ -102,7 +102,7 @@ bool UGSPMasterGameInstance::TryCreateGamePlayHUDWidget()
 		{
 			GameplayHUDWidgetInst->AddToViewport(0);
 			GameMenuHUDInst->AddToViewport(1);
-			//GameMenuHUDInst->SetVisibility(ESlateVisibility::Hidden);
+			GameMenuHUDInst->SetVisibility(ESlateVisibility::Hidden);
 			return true;
 		}
 	}
