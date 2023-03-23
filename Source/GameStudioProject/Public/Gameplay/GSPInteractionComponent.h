@@ -19,8 +19,8 @@ enum class EInteractionPopupMessage : uint8
 	PickUp UMETA(ToolTip="Displays 'Pick Up'on the players HUD, useful for adding physical items to the players inventory"),
 	Push UMETA(ToolTip="Displays 'Push'on the players HUD, useful for pushable objects"),
 	Talk UMETA(ToolTip="Displays 'Talk'on the players HUD, useful for NPC interactions"),
-	Use UMETA(ToolTip="Displays 'Use'on the players HUD, useful for NPC interactions"),
-	UseRequiredItem UMETA(ToolTip="Displays 'Use (required item(s)'on the players HUD, useful for NPC interactions") 
+	Use UMETA(ToolTip="Displays 'Use'on the players HUD, useful for making a usable actor i.e. a button"),
+	UseRequiredItem UMETA(ToolTip="Displays 'Use (required item(s)'on the players HUD, use if the interaction requires item(s)") 
 };
 
 /**

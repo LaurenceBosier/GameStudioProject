@@ -188,7 +188,6 @@ void AGameStudioProjectCharacter::SetupPlayerInputComponent(class UInputComponen
 	PlayerInputComponent->BindAction("Block", IE_Pressed, this, &AGameStudioProjectCharacter::StartBlock);
 	PlayerInputComponent->BindAction("Block", IE_Released, this, &AGameStudioProjectCharacter::StopBlock);
 
-	
 
 	/* Axis Mappings */
 	
@@ -217,6 +216,11 @@ void AGameStudioProjectCharacter::TryInteract()
 void AGameStudioProjectCharacter::TryCombatLock()
 {
 	UE_LOG(LogTemp, Log, TEXT("Attempt Combat Lock, (work in progress)"));
+
+	if(GetWorld())
+	{
+
+	}
 }
 
 void AGameStudioProjectCharacter::ToggleInventory()
@@ -255,6 +259,7 @@ void AGameStudioProjectCharacter::ToggleInventory()
 
 void AGameStudioProjectCharacter::ToggleMap()
 {
+
 }
 
 

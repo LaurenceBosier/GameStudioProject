@@ -238,5 +238,4 @@ bool UGSPMasterGameInstance::LevelUp(int InOverflowXp, EXpAwardType InUserInterf
 	}
 
 	return false;
-
 }
