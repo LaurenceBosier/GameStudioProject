@@ -123,7 +123,7 @@ private:
 	 * @return 
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "User Interface")
-	FORCEINLINE class UUserWidget* GetGamePlayHUDWidget() { return GamePlayHUDWidget; }
+	FORCEINLINE class UUserWidget* GetGamePlayHUDWidget() { return GameplayHUDWidgetInst; }
 
 	/**
 	 * @brief Attempts to level the player up
@@ -138,10 +138,17 @@ public:
 
 	//The widget class that will be displayed as the players main HUD
 	UPROPERTY(EditAnywhere, Category = "User Interface")
-	TSubclassOf<class UUserWidget> GamePlayHUDClass;
+	TSubclassOf<class UUserWidget> GameplayHUDClass;
 
-	//The instance of the created widget
-	class UUserWidget* GamePlayHUDWidget { nullptr };
+	//The widget class that will be displayed as the players menu UI
+	UPROPERTY(EditAnywhere, Category = "User Interface")
+	TSubclassOf<class UUserWidget> GameMenuHUDClass;
+
+	//The instance of GameplayHUDClass
+	class UUserWidget* GameplayHUDWidgetInst { nullptr };
+
+	//The instance of GameplayHUDClass
+	class UUserWidget* GameMenuHUDInst { nullptr };
 
 	//The players current level
 	UPROPERTY(EditDefaultsOnly, Category = "XP")

@@ -86,19 +86,23 @@ void UGSPMasterGameInstance::AddPlayerXP(int InXpAmount, EXpAwardType InUserInte
 bool UGSPMasterGameInstance::TryCreateGamePlayHUDWidget()
 {
 	//If the HUD class has been selected
-	if(!GamePlayHUDClass)
+	if(!GameplayHUDClass && !GameMenuHUDClass)
 	{
 		return false;
 	}
 	
 	//If there isn't an existing instance 
-	if(!GamePlayHUDWidget)
+	if(!GameplayHUDWidgetInst && !GameMenuHUDInst)
 	{
-		GamePlayHUDWidget = CreateWidget<UUserWidget>(this, GamePlayHUDClass);
+		GameplayHUDWidgetInst = CreateWidget<UUserWidget>(this, GameplayHUDClass);
 
-		if(GamePlayHUDWidget) 
+		GameMenuHUDInst = CreateWidget<UUserWidget>(this, GameMenuHUDClass);
+
+		if(GameplayHUDWidgetInst && GameMenuHUDClass) 
 		{
-			GamePlayHUDWidget->AddToViewport(-1);
+			GameplayHUDWidgetInst->AddToViewport(0);
+			GameMenuHUDInst->AddToViewport(1);
+			GameMenuHUDInst->SetVisibility(ESlateVisibility::Hidden);
 			return true;
 		}
 	}
@@ -234,5 +238,4 @@ bool UGSPMasterGameInstance::LevelUp(int InOverflowXp, EXpAwardType InUserInterf
 	}
 
 	return false;
-
 }

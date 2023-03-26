@@ -1,6 +1,11 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "GameStudioProject/Public/Gameplay/GameStudioProjectCharacter.h"
+
+#include <complex.h>
+
+#include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -173,11 +178,16 @@ void AGameStudioProjectCharacter::SetupPlayerInputComponent(class UInputComponen
 	//Interact binding
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AGameStudioProjectCharacter::TryInteract);
 
+	//Toggle Inventory binding
+	PlayerInputComponent->BindAction("Toggle Inventory", IE_Pressed, this, &AGameStudioProjectCharacter::ToggleInventory);
+
+	//Toggle Map binding
+	PlayerInputComponent->BindAction("Toggle Map", IE_Pressed, this, &AGameStudioProjectCharacter::ToggleMap);
+
 	//Block start / stop binding
 	PlayerInputComponent->BindAction("Block", IE_Pressed, this, &AGameStudioProjectCharacter::StartBlock);
 	PlayerInputComponent->BindAction("Block", IE_Released, this, &AGameStudioProjectCharacter::StopBlock);
 
-	
 
 	/* Axis Mappings */
 	
@@ -206,6 +216,50 @@ void AGameStudioProjectCharacter::TryInteract()
 void AGameStudioProjectCharacter::TryCombatLock()
 {
 	UE_LOG(LogTemp, Log, TEXT("Attempt Combat Lock, (work in progress)"));
+
+	if(GetWorld())
+	{
+
+	}
+}
+
+void AGameStudioProjectCharacter::ToggleInventory()
+{
+	if(!MasterGameInstanceRef)
+	{
+		return;
+	}
+
+	const auto widgetRef = MasterGameInstanceRef->GameMenuHUDInst;
+
+	if(!widgetRef)
+	{
+		return;
+	}
+
+	APlayerController* pcRef = static_cast<APlayerController*>(GetController());
+
+	if(!pcRef)
+	{
+		return;
+	}
+
+	if(widgetRef->GetVisibility() == ESlateVisibility::Hidden)
+	{
+		widgetRef->SetVisibility(ESlateVisibility::Visible);
+		pcRef->SetShowMouseCursor(true);
+		UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx(pcRef, widgetRef, EMouseLockMode::LockInFullscreen);
+		return;
+	}
+
+	pcRef->SetShowMouseCursor(false);
+	MasterGameInstanceRef->GameMenuHUDInst->SetVisibility(ESlateVisibility::Hidden);
+	UWidgetBlueprintLibrary::SetInputMode_GameOnly(pcRef);
+}
+
+void AGameStudioProjectCharacter::ToggleMap()
+{
+
 }
 
 

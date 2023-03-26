@@ -38,18 +38,25 @@ protected:
 	/** Called for side to side input */
 	void MoveRight(float InValue);
 
+	/** Called for sprint down input */
 	void StartSprint();
 
+	/** Called for sprint up input */
 	void StopSprint();
 
+	/** Called for crouch down input */
 	void StartCrouch(); //Todo if pressed in quick succession you should roll and return to previous state
 
+	/** Called for crouch up input */
 	void StopCrouch();
 
+	/** Called for block down input */
 	void StartBlock();
 
+	/** Called for block up input */
 	void StopBlock();
 
+	/** Called for attack down input */
 	void TryAttack();
 
 	/** Called for interaction actions */
@@ -57,6 +64,12 @@ protected:
 
 	/** Called for interaction actions */
 	void TryCombatLock();
+
+	/** Called for interaction actions */
+	void ToggleInventory();
+
+	/** Called for interaction actions */
+	void ToggleMap();
 
 
 public:
