@@ -270,11 +270,22 @@ void AGameStudioProjectCharacter::ToggleInventory()
 	{
 		Player3DRenderCamera->bCaptureEveryFrame = true;
 		Player3DRenderCamera->bCaptureOnMovement = true;
+
+		FollowCamera->PostProcessSettings.bOverride_ReflectionMethod = true;
+		FollowCamera->PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
+		FollowCamera->PostProcessSettings.ReflectionMethod = EReflectionMethod::None;
+		FollowCamera->PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::None;
+
 		widgetRef->SetVisibility(ESlateVisibility::Visible);
 		pcRef->SetShowMouseCursor(true);
 		UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx(pcRef, widgetRef, EMouseLockMode::LockInFullscreen);
 		return;
 	}
+
+	FollowCamera->PostProcessSettings.bOverride_ReflectionMethod = true;
+	FollowCamera->PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
+	FollowCamera->PostProcessSettings.ReflectionMethod = EReflectionMethod::Lumen;
+	FollowCamera->PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Lumen;
 
 	Player3DRenderCamera->bCaptureEveryFrame = false;
 	Player3DRenderCamera->bCaptureOnMovement = false;
