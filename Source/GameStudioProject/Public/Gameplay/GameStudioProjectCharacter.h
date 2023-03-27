@@ -74,9 +74,11 @@ protected:
 
 public:
 
+	//The speed the player moves at by default
 	UPROPERTY(EditDefaultsOnly, Category = "Player Stats")
 	float DefaultWalkSpeed = 425;
 
+	//The players speed when sprint key is held
 	UPROPERTY(EditDefaultsOnly, Category = "Player Stats")
 	float SprintSpeed = 630;
 
@@ -104,5 +106,8 @@ private:
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class USceneCaptureComponent2D* Player3DRenderCamera;
 };
 

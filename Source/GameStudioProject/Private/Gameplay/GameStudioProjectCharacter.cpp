@@ -14,6 +14,7 @@
 #include "GameCore/GSPFunctionLibrary.h"
 #include "GameCore/GSPMasterGameInstance.h"
 #include "Gameplay/GSPHealthComponent.h"
+#include "Components/SceneCaptureComponent2D.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -55,7 +56,22 @@ AGameStudioProjectCharacter::AGameStudioProjectCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+
+	Player3DRenderCamera = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("Player3DRenderCamera"));
+	Player3DRenderCamera->SetupAttachment(GetMesh());
+	Player3DRenderCamera->ProjectionType = ECameraProjectionMode::Orthographic;
+	Player3DRenderCamera->OrthoWidth = 120;
+	Player3DRenderCamera->CompositeMode = ESceneCaptureCompositeMode::SCCM_Overwrite;
+	Player3DRenderCamera->CaptureSource = ESceneCaptureSource::SCS_SceneColorHDR;
+	Player3DRenderCamera->PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;
+
+	//Create 3D render camera for player inventory 
+	Player3DRenderCamera->bCaptureEveryFrame = false;
+	Player3DRenderCamera->bCaptureOnMovement = false;
+
+	//Create player health component
 	PlayerHealthComponent = CreateDefaultSubobject<UGSPHealthComponent>(TEXT("PlayerHealth"));
+
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
@@ -66,9 +82,14 @@ void AGameStudioProjectCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
+	//Set the master game instance ref; 
+	MasterGameInstanceRef = UGSPFunctionLibrary::GetGSPGameInstance(this);
+
+	//Set the players walk speed to the DefaultWalkSpeed
 	GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed;
 
-	MasterGameInstanceRef = UGSPFunctionLibrary::GetGSPGameInstance(this);
+	//Make the Player3DRenderCamera only render this actor
+	Player3DRenderCamera->ShowOnlyActors = { this };
 
 	//Try add player HUD to screen //Todo move this to show/hide game instance creates it at init and sets to invis
 	if(MasterGameInstanceRef)
@@ -223,6 +244,7 @@ void AGameStudioProjectCharacter::TryCombatLock()
 	}
 }
 
+//Todo remove this mess!
 void AGameStudioProjectCharacter::ToggleInventory()
 {
 	if(!MasterGameInstanceRef)
@@ -246,12 +268,16 @@ void AGameStudioProjectCharacter::ToggleInventory()
 
 	if(widgetRef->GetVisibility() == ESlateVisibility::Hidden)
 	{
+		Player3DRenderCamera->bCaptureEveryFrame = true;
+		Player3DRenderCamera->bCaptureOnMovement = true;
 		widgetRef->SetVisibility(ESlateVisibility::Visible);
 		pcRef->SetShowMouseCursor(true);
 		UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx(pcRef, widgetRef, EMouseLockMode::LockInFullscreen);
 		return;
 	}
 
+	Player3DRenderCamera->bCaptureEveryFrame = false;
+	Player3DRenderCamera->bCaptureOnMovement = false;
 	pcRef->SetShowMouseCursor(false);
 	MasterGameInstanceRef->GameMenuHUDInst->SetVisibility(ESlateVisibility::Hidden);
 	UWidgetBlueprintLibrary::SetInputMode_GameOnly(pcRef);
