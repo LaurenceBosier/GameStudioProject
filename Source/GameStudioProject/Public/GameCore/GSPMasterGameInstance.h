@@ -47,6 +47,12 @@ public:
 	UFUNCTION(Category = "XP")
 	void AddPlayerXP(int InXpAmount, EXpAwardType InUserInterfacePrompt);
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "XP")
+	void OnGainXp(int OutXpAmount);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "XP")
+	void OnLevelUp(int OutNewLevel);
+
 	/**
 	 * @brief Attempts to create and add the game play HUD to the screen 
 	 * @return True if the widget was successfully created and added to the screen, false if failed or instance already exists 
@@ -120,10 +126,17 @@ private:
 
 	/**
 	 * @brief Getter for the players game play widget instance 
-	 * @return 
+	 * @return game play widget instance
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "User Interface")
 	FORCEINLINE class UUserWidget* GetGamePlayHUDWidget() { return GameplayHUDWidgetInst; }
+
+	/**
+	 * @brief Getter for the game menu widget instance 
+	 * @return game menu widget instance
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "User Interface")
+	FORCEINLINE class UUserWidget* GetMenuWidget() { return GameMenuHUDInst; }
 
 	/**
 	 * @brief Attempts to level the player up

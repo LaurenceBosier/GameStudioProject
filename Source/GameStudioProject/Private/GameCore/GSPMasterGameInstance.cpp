@@ -49,6 +49,7 @@ void UGSPMasterGameInstance::Init()
 
 	//Find the amount of XP required to level up
 	RequiredXpForLevelUp = static_cast<int>(XPLevelUpCurve->GetFloatValue(CurrentPlayerLevel));
+
 }
 
 void UGSPMasterGameInstance::Shutdown()
@@ -74,6 +75,8 @@ void UGSPMasterGameInstance::OnPawnControllerChanged(APawn* InPawn, AController*
 
 void UGSPMasterGameInstance::AddPlayerXP(int InXpAmount, EXpAwardType InUserInterfacePrompt)
 {
+	OnGainXp(InXpAmount);
+
 	if((CurrentPlayerXP + InXpAmount) >= RequiredXpForLevelUp)
 	{
 		LevelUp((CurrentPlayerXP + InXpAmount) - RequiredXpForLevelUp);
@@ -230,6 +233,8 @@ bool UGSPMasterGameInstance::LevelUp(int InOverflowXp, EXpAwardType InUserInterf
 
 	//Increment the players level 
 	CurrentPlayerLevel++;
+
+	OnLevelUp(CurrentPlayerLevel);
 
 	//If there is leftover XP after leveling up, add it to the next level 
 	if(InOverflowXp > 0)
