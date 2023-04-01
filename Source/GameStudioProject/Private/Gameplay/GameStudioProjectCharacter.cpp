@@ -14,6 +14,7 @@
 #include "GameCore/GSPFunctionLibrary.h"
 #include "GameCore/GSPMasterGameInstance.h"
 #include "Gameplay/GSPHealthComponent.h"
+#include "Gameplay/GSPInventoryComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -42,7 +43,7 @@ AGameStudioProjectCharacter::AGameStudioProjectCharacter()
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
-	GetCharacterMovement()->Mass = 160;
+	GetCharacterMovement()->Mass = 75;
 	GetCharacterMovement()->bPushForceScaledToMass = true;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
@@ -71,6 +72,9 @@ AGameStudioProjectCharacter::AGameStudioProjectCharacter()
 
 	//Create player health component
 	PlayerHealthComponent = CreateDefaultSubobject<UGSPHealthComponent>(TEXT("PlayerHealth"));
+
+	//Creates player inventory component
+	PlayerInventoryComponent = CreateDefaultSubobject<UGSPInventoryComponent>(TEXT("PlayerInventory"));
 
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 

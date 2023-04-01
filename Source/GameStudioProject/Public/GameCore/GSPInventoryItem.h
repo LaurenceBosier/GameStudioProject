@@ -1,4 +1,4 @@
-// Game Studio Project Team F 2023
+// Game Studio Project Team F 2023 - Laurence Bosier
 
 #pragma once
 
@@ -6,17 +6,24 @@
 #include "UObject/NoExportTypes.h"
 #include "GSPInventoryItem.generated.h"
 
+//The category of item
 UENUM(BlueprintType)
-enum class EItemType : uint8
+enum class EItemCategory : uint8
 {
-	InventoryItem, 
-	Axe,
-	Sword,
-	Spear,
-	Helmet,
-	ChestPlate,
+	InventoryItem      UMETA(ToolTip="A non-equipable item, apperais in menu 'items' page."), 
+	Weapon             UMETA(ToolTip="An equipable weapon, apperais in menu 'weapons' page."), 
+	Armour             UMETA(ToolTip="An equipable armour pice, apperais in menu 'armour' page.")
 };
 
+//The type of non-equipable item
+UENUM(BlueprintType)
+enum class EInventoryItemType : uint8
+{
+	Artifact           UMETA(ToolTip="An item which is given a description in the world."), 
+	CraftingResource   UMETA(ToolTip="An item used in crafting."), 
+};
+
+//The items rarity
 UENUM(BlueprintType)
 enum class EItemRarity : uint8
 {
@@ -27,10 +34,7 @@ enum class EItemRarity : uint8
 	EXOTIC,
 };
 
-
-/**
- * 
- */
+/* A read-only container of information about a specific inventory item */
 UCLASS()
 class GAMESTUDIOPROJECT_API UGSPInventoryItem : public UPrimaryDataAsset
 {
@@ -38,27 +42,97 @@ class GAMESTUDIOPROJECT_API UGSPInventoryItem : public UPrimaryDataAsset
 
 public:
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item")
-	TEnumAsByte<EItemType> ItemType;
+	/* Generic item attributes */
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item")
+	//What is the use of the item
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+	TEnumAsByte<EItemCategory> ItemType;
+
+	//The items display name
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	FText ItemName;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item")
+	//The items description
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	FText ItemDescription;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item")
+	//The items in-game rarity
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	TEnumAsByte<EItemRarity> ItemRarity;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item")
-	int ItemLevel;
+	//How much the item is worth to sell to the blacksmith
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+	int ItemValue; 
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item", meta = (EditCondition = "ItemType != EItemType::InventoryItem ", EditConditionHides))
-	TArray<FText> DefaultEquipmentBuffs;
+	//The mesh used by the item
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+	UStaticMesh* ItemMesh;
 
-	FPrimaryAssetId GetPrimaryAssetId() const override
+	//If the inventory item is stack-able
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (EditCondition = "ItemType == EItemType::InventoryItem ", EditConditionHides))
+	bool IsStackable = true;
+
+	//The max stack size for the inventory item
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (EditCondition = "IsStackable == true", EditConditionHides))
+	int MaxStackSize = 999;
+
+	/* Equipable  items */
+
+	//The base damage inflicted by the weapon
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item Equipment", meta = (EditCondition = "ItemType == EItemType::Weapon ", EditConditionHides))
+	int BaseDamage;
+
+	//The base defense value of the armour 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item Equipment", meta = (EditCondition = "ItemType == EItemType::Armour ", EditConditionHides))
+	int BaseDefense;
+
+	//The equipment buffs applied to the equipment by default
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item Equipment", meta = (EditCondition = "ItemType != EItemType::InventoryItem ", EditConditionHides))
+	TArray<FText> DefaultBuffs;
+
+
+public:
+
+	//Append Items to the asset id 
+	virtual FPrimaryAssetId GetPrimaryAssetId() const override
 	{
 		return FPrimaryAssetId("Items", GetFName());
 	}
 
 };
+
+
+USTRUCT(BlueprintType)
+struct FEquipmentItemInst
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Item")
+	UGSPInventoryItem* EquipmentDataAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Item")
+	int EquipmentLevel;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Item")
+	TArray<FText> EquipmentBuffs;
+
+};
+
+USTRUCT(BlueprintType)
+struct FInventoryItemInst
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory Item")
+	UGSPInventoryItem* EquipmentDataAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory Item")
+	int CurrentStackSize;
+
+};
+
+

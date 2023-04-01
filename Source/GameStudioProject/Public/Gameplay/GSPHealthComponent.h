@@ -6,8 +6,8 @@
 #include "GameCore/GSPActorComponentBase.h"
 #include "GSPHealthComponent.generated.h"
 
-
 //Todo add a bone damage multiplier. (By default multiply all damage by 1 unless the bone has a damage value mapped to it).
+
 /**
  * 
  */
