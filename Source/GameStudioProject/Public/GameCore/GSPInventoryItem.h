@@ -10,18 +10,15 @@
 UENUM(BlueprintType)
 enum class EItemCategory : uint8
 {
-	InventoryItem      UMETA(ToolTip="A non-equipable item, apperais in menu 'items' page."), 
-	Weapon             UMETA(ToolTip="An equipable weapon, apperais in menu 'weapons' page."), 
-	Armour             UMETA(ToolTip="An equipable armour pice, apperais in menu 'armour' page.")
+	Artifact           UMETA(ToolTip="A non-equipable artifact, apperais in menu 'items' page."), 
+	CraftingResource   UMETA(ToolTip="A non-equipable crafting resource, apperais in menu 'items' page."), 
+	Sword              UMETA(ToolTip="An equipable sword, apperais in menu 'weapons' page."), 
+	Spear              UMETA(ToolTip="An equipable spear, apperais in menu 'weapons' page."), 
+	Axe                UMETA(ToolTip="An equipable axe, apperais in menu 'weapons' page."), 
+	Helmet             UMETA(ToolTip="An equipable helemt pice, apperais in menu 'armour' page."),
+	ChestPlate         UMETA(ToolTip="An equipable chestplate pice, apperais in menu 'armour' page.")
 };
 
-//The type of non-equipable item
-UENUM(BlueprintType)
-enum class EInventoryItemType : uint8
-{
-	Artifact           UMETA(ToolTip="An item which is given a description in the world."), 
-	CraftingResource   UMETA(ToolTip="An item used in crafting."), 
-};
 
 //The items rarity
 UENUM(BlueprintType)
@@ -78,6 +75,7 @@ public:
 
 	/* Equipable  items */
 
+
 	//The base damage inflicted by the weapon
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item Equipment", meta = (EditCondition = "ItemType == EItemType::Weapon ", EditConditionHides))
 	int BaseDamage;
@@ -100,7 +98,6 @@ public:
 	}
 
 };
-
 
 USTRUCT(BlueprintType)
 struct FEquipmentItemInst
