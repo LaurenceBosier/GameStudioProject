@@ -19,6 +19,8 @@ public:
 
 	virtual void BeginPlay() override;
 
+
+
 	UFUNCTION(BlueprintCallable, Category = "Inventory Access")
 	bool GetInventoryItems(EItemCategory InItemCategory, TArray<FInventoryItemInst>& OutItems);
 

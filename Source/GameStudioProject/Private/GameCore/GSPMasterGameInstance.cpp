@@ -3,8 +3,11 @@
 #include "GameCore/GSPMasterGameInstance.h"
 
 #include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Gameplay/GSPInteractionComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/Pawn.h"
+#include "Gameplay/GameStudioProjectCharacter.h"
 
 void UGSPMasterGameInstance::Init()
 {
@@ -173,6 +176,47 @@ void UGSPMasterGameInstance::RemoveOverlappedInteractionComponent(UGSPInteractio
 
 	//If no components are overlapped with remove the interaction pop-up 
 	OnRemoveInteractionPopup();
+}
+
+void UGSPMasterGameInstance::ToggleInventory()
+{
+
+	if (!GameMenuHUDInst || !GetWorld())
+	{
+		return;
+	}
+
+
+	APlayerController* pcRef = UGameplayStatics::GetPlayerController(GetWorld(),0);
+
+	if (!pcRef)
+	{
+		return;
+	}
+
+	auto* playerCharacter = static_cast<AGameStudioProjectCharacter*>(pcRef->GetPawn());
+
+	if(!playerCharacter)
+	{
+		return;
+	}
+
+	if (GameMenuHUDInst->GetVisibility() == ESlateVisibility::Hidden)
+	{
+		playerCharacter->StartPlayerRenderTarget();
+	
+
+		GameMenuHUDInst->SetVisibility(ESlateVisibility::Visible);
+		pcRef->SetShowMouseCursor(true);
+		UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(pcRef, GameMenuHUDInst, EMouseLockMode::LockInFullscreen);
+		return;
+	}
+
+	playerCharacter->StopPlayerRenderTarget();
+
+	pcRef->SetShowMouseCursor(false);
+	GameMenuHUDInst->SetVisibility(ESlateVisibility::Hidden);
+	UWidgetBlueprintLibrary::SetInputMode_GameOnly(pcRef);
 }
 
 void UGSPMasterGameInstance::InteractionObservationTick()

@@ -2,10 +2,6 @@
 
 #include "GameStudioProject/Public/Gameplay/GameStudioProjectCharacter.h"
 
-#include <complex.h>
-
-#include "Blueprint/UserWidget.h"
-#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -16,11 +12,32 @@
 #include "Gameplay/GSPHealthComponent.h"
 #include "Gameplay/GSPInventoryComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
-#include "Kismet/GameplayStatics.h"
 
 
 //////////////////////////////////////////////////////////////////////////
 // AGameStudioProjectCharacter
+
+void AGameStudioProjectCharacter::StartPlayerRenderTarget()
+{
+	Player3DRenderCamera->bCaptureEveryFrame = true;
+	Player3DRenderCamera->bCaptureOnMovement = true;
+
+	FollowCamera->PostProcessSettings.bOverride_ReflectionMethod = true;
+	FollowCamera->PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
+	FollowCamera->PostProcessSettings.ReflectionMethod = EReflectionMethod::None;
+	FollowCamera->PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::None;
+}
+
+void AGameStudioProjectCharacter::StopPlayerRenderTarget()
+{
+	FollowCamera->PostProcessSettings.bOverride_ReflectionMethod = true;
+	FollowCamera->PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
+	FollowCamera->PostProcessSettings.ReflectionMethod = EReflectionMethod::Lumen;
+	FollowCamera->PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Lumen;
+
+	Player3DRenderCamera->bCaptureEveryFrame = false;
+	Player3DRenderCamera->bCaptureOnMovement = false;
+}
 
 AGameStudioProjectCharacter::AGameStudioProjectCharacter()
 {
@@ -44,7 +61,7 @@ AGameStudioProjectCharacter::AGameStudioProjectCharacter()
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->Mass = 75;
-	GetCharacterMovement()->bPushForceScaledToMass = true;
+	GetCharacterMovement()->bPushForceScaledToMass = false;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -256,46 +273,7 @@ void AGameStudioProjectCharacter::ToggleInventory()
 		return;
 	}
 
-	const auto widgetRef = MasterGameInstanceRef->GameMenuHUDInst;
-
-	if(!widgetRef)
-	{
-		return;
-	}
-
-	APlayerController* pcRef = static_cast<APlayerController*>(GetController());
-
-	if(!pcRef)
-	{
-		return;
-	}
-
-	if(widgetRef->GetVisibility() == ESlateVisibility::Hidden)
-	{
-		Player3DRenderCamera->bCaptureEveryFrame = true;
-		Player3DRenderCamera->bCaptureOnMovement = true;
-
-		FollowCamera->PostProcessSettings.bOverride_ReflectionMethod = true;
-		FollowCamera->PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
-		FollowCamera->PostProcessSettings.ReflectionMethod = EReflectionMethod::None;
-		FollowCamera->PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::None;
-
-		widgetRef->SetVisibility(ESlateVisibility::Visible);
-		pcRef->SetShowMouseCursor(true);
-		UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx(pcRef, widgetRef, EMouseLockMode::LockInFullscreen);
-		return;
-	}
-
-	FollowCamera->PostProcessSettings.bOverride_ReflectionMethod = true;
-	FollowCamera->PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
-	FollowCamera->PostProcessSettings.ReflectionMethod = EReflectionMethod::Lumen;
-	FollowCamera->PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Lumen;
-
-	Player3DRenderCamera->bCaptureEveryFrame = false;
-	Player3DRenderCamera->bCaptureOnMovement = false;
-	pcRef->SetShowMouseCursor(false);
-	MasterGameInstanceRef->GameMenuHUDInst->SetVisibility(ESlateVisibility::Hidden);
-	UWidgetBlueprintLibrary::SetInputMode_GameOnly(pcRef);
+	MasterGameInstanceRef->ToggleInventory();
 }
 
 void AGameStudioProjectCharacter::ToggleMap()

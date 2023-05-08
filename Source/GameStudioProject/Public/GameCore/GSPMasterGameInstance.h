@@ -94,6 +94,8 @@ public:
 	UFUNCTION()
 	void RemoveOverlappedInteractionComponent(UGSPInteractionComponent* InInteractionComponent);
 
+	UFUNCTION(BlueprintCallable, Category = "Player Inventory")
+	void ToggleInventory();
 
 private:
 
@@ -153,15 +155,18 @@ public:
 	UPROPERTY(EditAnywhere, Category = "User Interface")
 	TSubclassOf<class UUserWidget> GameplayHUDClass;
 
+	//The instance of GameplayHUDClass
+	UPROPERTY()
+	class UUserWidget* GameplayHUDWidgetInst{ nullptr };
+
 	//The widget class that will be displayed as the players menu UI
 	UPROPERTY(EditAnywhere, Category = "User Interface")
 	TSubclassOf<class UUserWidget> GameMenuHUDClass;
 
 	//The instance of GameplayHUDClass
-	class UUserWidget* GameplayHUDWidgetInst { nullptr };
+	UPROPERTY()
+	class UUserWidget* GameMenuHUDInst{ nullptr };
 
-	//The instance of GameplayHUDClass
-	class UUserWidget* GameMenuHUDInst { nullptr };
 
 	//The players current level
 	UPROPERTY(EditDefaultsOnly, Category = "XP")

@@ -6,7 +6,7 @@
 void UGSPInventoryComponent::BeginPlay()
 {
 
-	for (auto EquipmentItem : DefaultInventoryEquipment)
+	for (auto& EquipmentItem : DefaultInventoryEquipment)
 	{
 		if(!EquipmentItem.EquipmentDataAsset)
 		{
@@ -35,7 +35,7 @@ void UGSPInventoryComponent::BeginPlay()
 		}
 	}
 
-	for (auto InventoryItem : DefaultInventoryItems)
+	for (auto& InventoryItem : DefaultInventoryItems)
 	{
 		if(!InventoryItem.EquipmentDataAsset)
 		{

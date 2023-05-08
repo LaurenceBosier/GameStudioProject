@@ -11,6 +11,14 @@ UCLASS(config=Game)
 class AGameStudioProjectCharacter : public ACharacter
 {
 
+public:
+
+	UFUNCTION(BlueprintCallable, Category = "User Interface")
+	void StartPlayerRenderTarget();
+
+	UFUNCTION(BlueprintCallable, Category = "User Interface")
+	void StopPlayerRenderTarget();
+
 protected:
 
 	GENERATED_BODY()
