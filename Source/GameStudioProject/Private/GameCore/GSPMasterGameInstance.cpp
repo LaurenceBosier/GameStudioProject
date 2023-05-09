@@ -245,6 +245,10 @@ void UGSPMasterGameInstance::InteractionObservationTick()
 		//Loop through all overlapped components
 		for (const auto& IntractableComponent : IntractableComponents)
 		{
+			if(!IsValid(IntractableComponent))
+			{
+				continue;
+			}
 			//If a components is being observed return
 			if(IntractableComponent->IsPlayerObserving(CameraManagerRef->GetCameraLocation(), CameraManagerRef->GetActorForwardVector()))
 			{

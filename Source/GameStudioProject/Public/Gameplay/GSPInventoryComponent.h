@@ -19,7 +19,11 @@ public:
 
 	virtual void BeginPlay() override;
 
+	UFUNCTION(BlueprintCallable, Category = "Inventory Access")
+	bool AddInventoryItem(FInventoryItemInst InItem);
 
+	UFUNCTION(BlueprintCallable, Category = "Inventory Access")
+	bool AddEquipmentItem(FEquipmentItemInst InEquipment);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory Access")
 	bool GetInventoryItems(EItemCategory InItemCategory, TArray<FInventoryItemInst>& OutItems);

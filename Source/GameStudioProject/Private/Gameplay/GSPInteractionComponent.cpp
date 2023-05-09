@@ -38,6 +38,7 @@ void UGSPInteractionComponent::BeginPlay()
 void UGSPInteractionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	InteractionRadiusCollider->UnregisterComponent();
+	GetOwner()->RemoveOwnedComponent(InteractionRadiusCollider);
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -106,6 +107,8 @@ void UGSPInteractionComponent::RegisterCollisionComponent()
 {
 	InteractionRadiusCollider = NewObject<USphereComponent>(GetOwner(), TEXT("Interaction radius v2"));
 
+	GetOwner()->AddOwnedComponent(InteractionRadiusCollider);
+
 	InteractionRadiusCollider->SetAbsolute(false,false,true);
 
 	InteractionRadiusCollider->CreationMethod = EComponentCreationMethod::Native;
@@ -141,6 +144,17 @@ void UGSPInteractionComponent::RegisterCollisionComponent()
 
 	//Register the component in the game
 	InteractionRadiusCollider->RegisterComponent();
+
+
+	const FAttachmentTransformRules AttachmentRules
+	{
+		EAttachmentRule::SnapToTarget,
+		EAttachmentRule::SnapToTarget,
+		EAttachmentRule::SnapToTarget,
+		true
+	};
+
+	InteractionRadiusCollider->AttachToComponent(GetOwner()->FindComponentByClass<UStaticMeshComponent>(), AttachmentRules);
 }
 
 #if WITH_EDITOR

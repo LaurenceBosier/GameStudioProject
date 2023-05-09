@@ -8,55 +8,71 @@ void UGSPInventoryComponent::BeginPlay()
 
 	for (auto& EquipmentItem : DefaultInventoryEquipment)
 	{
-		if(!EquipmentItem.EquipmentDataAsset)
-		{
-			continue;
-		}
-
-		switch(EquipmentItem.EquipmentDataAsset->ItemType)
-		{
-		case EItemCategory::Axe:
-			AxesArray.Add(EquipmentItem);
-			break;
-		case EItemCategory::Spear:
-			SpearsArray.Add(EquipmentItem);
-			break;
-		case EItemCategory::Sword:
-			SwordsArray.Add(EquipmentItem);
-			break;
-		case EItemCategory::Helmet:
-			HelmetsArray.Add(EquipmentItem);
-			break;
-		case EItemCategory::ChestPlate:
-			ChestplatesArray.Add(EquipmentItem);
-			break;
-		default:
-			break;
-		}
+		AddEquipmentItem(EquipmentItem);
 	}
 
 	for (auto& InventoryItem : DefaultInventoryItems)
 	{
-		if(!InventoryItem.EquipmentDataAsset)
-		{
-			continue;
-		}
-
-		switch(InventoryItem.EquipmentDataAsset->ItemType)
-		{
-		case EItemCategory::Artifact:
-			ArtifactsArray.Add(InventoryItem);
-			break;
-		case EItemCategory::CraftingResource:
-			CraftingResourcesArray.Add(InventoryItem);
-			break;
-		default:
-			break;
-		}
+		AddInventoryItem(InventoryItem);
 	}
 
 	Super::BeginPlay();
 }
+
+bool UGSPInventoryComponent::AddInventoryItem(FInventoryItemInst InItem)
+{
+	if (!InItem.EquipmentDataAsset)
+	{
+		return false;
+	}
+
+	switch (InItem.EquipmentDataAsset->ItemType)
+	{
+	case EItemCategory::Artifact:
+		ArtifactsArray.Add(InItem);
+		break;
+	case EItemCategory::CraftingResource:
+		CraftingResourcesArray.Add(InItem);
+		break;
+	default:
+		break;
+	}
+
+	return true;
+}
+
+bool UGSPInventoryComponent::AddEquipmentItem(FEquipmentItemInst InEquipment)
+{
+	if (!InEquipment.EquipmentDataAsset)
+	{
+		return false;
+	}
+
+	switch (InEquipment.EquipmentDataAsset->ItemType)
+	{
+	case EItemCategory::Axe:
+		AxesArray.Add(InEquipment);
+		break;
+	case EItemCategory::Spear:
+		SpearsArray.Add(InEquipment);
+		break;
+	case EItemCategory::Sword:
+		SwordsArray.Add(InEquipment);
+		break;
+	case EItemCategory::Helmet:
+		HelmetsArray.Add(InEquipment);
+		break;
+	case EItemCategory::ChestPlate:
+		ChestplatesArray.Add(InEquipment);
+		break;
+	default:
+		break;
+	}
+
+	return true;
+}
+
+
 
 bool UGSPInventoryComponent::GetInventoryItems(EItemCategory InItemCategory, TArray<FInventoryItemInst>& OutItems)
 {
