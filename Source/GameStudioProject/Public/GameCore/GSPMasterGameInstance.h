@@ -47,6 +47,12 @@ public:
 	UFUNCTION(Category = "XP")
 	void AddPlayerXP(int InXpAmount, EXpAwardType InUserInterfacePrompt);
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "XP")
+	void OnGainXp(int OutXpAmount);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "XP")
+	void OnLevelUp(int OutNewLevel);
+
 	/**
 	 * @brief Attempts to create and add the game play HUD to the screen 
 	 * @return True if the widget was successfully created and added to the screen, false if failed or instance already exists 
@@ -88,6 +94,8 @@ public:
 	UFUNCTION()
 	void RemoveOverlappedInteractionComponent(UGSPInteractionComponent* InInteractionComponent);
 
+	UFUNCTION(BlueprintCallable, Category = "Player Inventory")
+	void ToggleInventory();
 
 private:
 
@@ -120,10 +128,17 @@ private:
 
 	/**
 	 * @brief Getter for the players game play widget instance 
-	 * @return 
+	 * @return game play widget instance
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "User Interface")
-	FORCEINLINE class UUserWidget* GetGamePlayHUDWidget() { return GamePlayHUDWidget; }
+	FORCEINLINE class UUserWidget* GetGamePlayHUDWidget() { return GameplayHUDWidgetInst; }
+
+	/**
+	 * @brief Getter for the game menu widget instance 
+	 * @return game menu widget instance
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "User Interface")
+	FORCEINLINE class UUserWidget* GetMenuWidget() { return GameMenuHUDInst; }
 
 	/**
 	 * @brief Attempts to level the player up
@@ -138,10 +153,20 @@ public:
 
 	//The widget class that will be displayed as the players main HUD
 	UPROPERTY(EditAnywhere, Category = "User Interface")
-	TSubclassOf<class UUserWidget> GamePlayHUDClass;
+	TSubclassOf<class UUserWidget> GameplayHUDClass;
 
-	//The instance of the created widget
-	class UUserWidget* GamePlayHUDWidget { nullptr };
+	//The instance of GameplayHUDClass
+	UPROPERTY()
+	class UUserWidget* GameplayHUDWidgetInst{ nullptr };
+
+	//The widget class that will be displayed as the players menu UI
+	UPROPERTY(EditAnywhere, Category = "User Interface")
+	TSubclassOf<class UUserWidget> GameMenuHUDClass;
+
+	//The instance of GameplayHUDClass
+	UPROPERTY()
+	class UUserWidget* GameMenuHUDInst{ nullptr };
+
 
 	//The players current level
 	UPROPERTY(EditDefaultsOnly, Category = "XP")

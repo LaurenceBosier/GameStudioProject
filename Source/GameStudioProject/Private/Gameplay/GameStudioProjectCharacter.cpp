@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "GameStudioProject/Public/Gameplay/GameStudioProjectCharacter.h"
+
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -9,11 +10,34 @@
 #include "GameCore/GSPFunctionLibrary.h"
 #include "GameCore/GSPMasterGameInstance.h"
 #include "Gameplay/GSPHealthComponent.h"
-#include "Kismet/GameplayStatics.h"
+#include "Gameplay/GSPInventoryComponent.h"
+#include "Components/SceneCaptureComponent2D.h"
 
 
 //////////////////////////////////////////////////////////////////////////
 // AGameStudioProjectCharacter
+
+void AGameStudioProjectCharacter::StartPlayerRenderTarget()
+{
+	Player3DRenderCamera->bCaptureEveryFrame = true;
+	Player3DRenderCamera->bCaptureOnMovement = true;
+
+	FollowCamera->PostProcessSettings.bOverride_ReflectionMethod = true;
+	FollowCamera->PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
+	FollowCamera->PostProcessSettings.ReflectionMethod = EReflectionMethod::None;
+	FollowCamera->PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::None;
+}
+
+void AGameStudioProjectCharacter::StopPlayerRenderTarget()
+{
+	FollowCamera->PostProcessSettings.bOverride_ReflectionMethod = true;
+	FollowCamera->PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
+	FollowCamera->PostProcessSettings.ReflectionMethod = EReflectionMethod::Lumen;
+	FollowCamera->PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Lumen;
+
+	Player3DRenderCamera->bCaptureEveryFrame = false;
+	Player3DRenderCamera->bCaptureOnMovement = false;
+}
 
 AGameStudioProjectCharacter::AGameStudioProjectCharacter()
 {
@@ -36,8 +60,8 @@ AGameStudioProjectCharacter::AGameStudioProjectCharacter()
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
-	GetCharacterMovement()->Mass = 160;
-	GetCharacterMovement()->bPushForceScaledToMass = true;
+	GetCharacterMovement()->Mass = 75;
+	GetCharacterMovement()->bPushForceScaledToMass = false;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -50,7 +74,25 @@ AGameStudioProjectCharacter::AGameStudioProjectCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+
+	Player3DRenderCamera = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("Player3DRenderCamera"));
+	Player3DRenderCamera->SetupAttachment(GetMesh());
+	Player3DRenderCamera->ProjectionType = ECameraProjectionMode::Orthographic;
+	Player3DRenderCamera->OrthoWidth = 120;
+	Player3DRenderCamera->CompositeMode = ESceneCaptureCompositeMode::SCCM_Overwrite;
+	Player3DRenderCamera->CaptureSource = ESceneCaptureSource::SCS_SceneColorHDR;
+	Player3DRenderCamera->PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;
+
+	//Create 3D render camera for player inventory 
+	Player3DRenderCamera->bCaptureEveryFrame = false;
+	Player3DRenderCamera->bCaptureOnMovement = false;
+
+	//Create player health component
 	PlayerHealthComponent = CreateDefaultSubobject<UGSPHealthComponent>(TEXT("PlayerHealth"));
+
+	//Creates player inventory component
+	PlayerInventoryComponent = CreateDefaultSubobject<UGSPInventoryComponent>(TEXT("PlayerInventory"));
+
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
@@ -61,9 +103,14 @@ void AGameStudioProjectCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
+	//Set the master game instance ref; 
+	MasterGameInstanceRef = UGSPFunctionLibrary::GetGSPGameInstance(this);
+
+	//Set the players walk speed to the DefaultWalkSpeed
 	GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed;
 
-	MasterGameInstanceRef = UGSPFunctionLibrary::GetGSPGameInstance(this);
+	//Make the Player3DRenderCamera only render this actor
+	Player3DRenderCamera->ShowOnlyActors = { this };
 
 	//Try add player HUD to screen //Todo move this to show/hide game instance creates it at init and sets to invis
 	if(MasterGameInstanceRef)
@@ -173,11 +220,16 @@ void AGameStudioProjectCharacter::SetupPlayerInputComponent(class UInputComponen
 	//Interact binding
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AGameStudioProjectCharacter::TryInteract);
 
+	//Toggle Inventory binding
+	PlayerInputComponent->BindAction("Toggle Inventory", IE_Pressed, this, &AGameStudioProjectCharacter::ToggleInventory);
+
+	//Toggle Map binding
+	PlayerInputComponent->BindAction("Toggle Map", IE_Pressed, this, &AGameStudioProjectCharacter::ToggleMap);
+
 	//Block start / stop binding
 	PlayerInputComponent->BindAction("Block", IE_Pressed, this, &AGameStudioProjectCharacter::StartBlock);
 	PlayerInputComponent->BindAction("Block", IE_Released, this, &AGameStudioProjectCharacter::StopBlock);
 
-	
 
 	/* Axis Mappings */
 	
@@ -206,6 +258,27 @@ void AGameStudioProjectCharacter::TryInteract()
 void AGameStudioProjectCharacter::TryCombatLock()
 {
 	UE_LOG(LogTemp, Log, TEXT("Attempt Combat Lock, (work in progress)"));
+
+	if(GetWorld())
+	{
+
+	}
+}
+
+//Todo remove this mess!
+void AGameStudioProjectCharacter::ToggleInventory()
+{
+	if(!MasterGameInstanceRef)
+	{
+		return;
+	}
+
+	MasterGameInstanceRef->ToggleInventory();
+}
+
+void AGameStudioProjectCharacter::ToggleMap()
+{
+
 }
 
 

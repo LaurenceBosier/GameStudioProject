@@ -3,8 +3,11 @@
 #include "GameCore/GSPMasterGameInstance.h"
 
 #include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Gameplay/GSPInteractionComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/Pawn.h"
+#include "Gameplay/GameStudioProjectCharacter.h"
 
 void UGSPMasterGameInstance::Init()
 {
@@ -49,6 +52,7 @@ void UGSPMasterGameInstance::Init()
 
 	//Find the amount of XP required to level up
 	RequiredXpForLevelUp = static_cast<int>(XPLevelUpCurve->GetFloatValue(CurrentPlayerLevel));
+
 }
 
 void UGSPMasterGameInstance::Shutdown()
@@ -74,6 +78,8 @@ void UGSPMasterGameInstance::OnPawnControllerChanged(APawn* InPawn, AController*
 
 void UGSPMasterGameInstance::AddPlayerXP(int InXpAmount, EXpAwardType InUserInterfacePrompt)
 {
+	OnGainXp(InXpAmount);
+
 	if((CurrentPlayerXP + InXpAmount) >= RequiredXpForLevelUp)
 	{
 		LevelUp((CurrentPlayerXP + InXpAmount) - RequiredXpForLevelUp);
@@ -86,19 +92,23 @@ void UGSPMasterGameInstance::AddPlayerXP(int InXpAmount, EXpAwardType InUserInte
 bool UGSPMasterGameInstance::TryCreateGamePlayHUDWidget()
 {
 	//If the HUD class has been selected
-	if(!GamePlayHUDClass)
+	if(!GameplayHUDClass && !GameMenuHUDClass)
 	{
 		return false;
 	}
 	
 	//If there isn't an existing instance 
-	if(!GamePlayHUDWidget)
+	if(!GameplayHUDWidgetInst && !GameMenuHUDInst)
 	{
-		GamePlayHUDWidget = CreateWidget<UUserWidget>(this, GamePlayHUDClass);
+		GameplayHUDWidgetInst = CreateWidget<UUserWidget>(this, GameplayHUDClass);
 
-		if(GamePlayHUDWidget) 
+		GameMenuHUDInst = CreateWidget<UUserWidget>(this, GameMenuHUDClass);
+
+		if(GameplayHUDWidgetInst && GameMenuHUDClass) 
 		{
-			GamePlayHUDWidget->AddToViewport(-1);
+			GameplayHUDWidgetInst->AddToViewport(0);
+			GameMenuHUDInst->AddToViewport(1);
+			GameMenuHUDInst->SetVisibility(ESlateVisibility::Hidden);
 			return true;
 		}
 	}
@@ -168,6 +178,47 @@ void UGSPMasterGameInstance::RemoveOverlappedInteractionComponent(UGSPInteractio
 	OnRemoveInteractionPopup();
 }
 
+void UGSPMasterGameInstance::ToggleInventory()
+{
+
+	if (!GameMenuHUDInst || !GetWorld())
+	{
+		return;
+	}
+
+
+	APlayerController* pcRef = UGameplayStatics::GetPlayerController(GetWorld(),0);
+
+	if (!pcRef)
+	{
+		return;
+	}
+
+	auto* playerCharacter = static_cast<AGameStudioProjectCharacter*>(pcRef->GetPawn());
+
+	if(!playerCharacter)
+	{
+		return;
+	}
+
+	if (GameMenuHUDInst->GetVisibility() == ESlateVisibility::Hidden)
+	{
+		playerCharacter->StartPlayerRenderTarget();
+	
+
+		GameMenuHUDInst->SetVisibility(ESlateVisibility::Visible);
+		pcRef->SetShowMouseCursor(true);
+		UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(pcRef, GameMenuHUDInst, EMouseLockMode::LockInFullscreen);
+		return;
+	}
+
+	playerCharacter->StopPlayerRenderTarget();
+
+	pcRef->SetShowMouseCursor(false);
+	GameMenuHUDInst->SetVisibility(ESlateVisibility::Hidden);
+	UWidgetBlueprintLibrary::SetInputMode_GameOnly(pcRef);
+}
+
 void UGSPMasterGameInstance::InteractionObservationTick()
 {
 	//Return if there are no components to check 
@@ -194,6 +245,10 @@ void UGSPMasterGameInstance::InteractionObservationTick()
 		//Loop through all overlapped components
 		for (const auto& IntractableComponent : IntractableComponents)
 		{
+			if(!IsValid(IntractableComponent))
+			{
+				continue;
+			}
 			//If a components is being observed return
 			if(IntractableComponent->IsPlayerObserving(CameraManagerRef->GetCameraLocation(), CameraManagerRef->GetActorForwardVector()))
 			{
@@ -227,6 +282,8 @@ bool UGSPMasterGameInstance::LevelUp(int InOverflowXp, EXpAwardType InUserInterf
 	//Increment the players level 
 	CurrentPlayerLevel++;
 
+	OnLevelUp(CurrentPlayerLevel);
+
 	//If there is leftover XP after leveling up, add it to the next level 
 	if(InOverflowXp > 0)
 	{
@@ -234,5 +291,4 @@ bool UGSPMasterGameInstance::LevelUp(int InOverflowXp, EXpAwardType InUserInterf
 	}
 
 	return false;
-
 }

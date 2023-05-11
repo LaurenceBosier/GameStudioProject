@@ -11,6 +11,14 @@ UCLASS(config=Game)
 class AGameStudioProjectCharacter : public ACharacter
 {
 
+public:
+
+	UFUNCTION(BlueprintCallable, Category = "User Interface")
+	void StartPlayerRenderTarget();
+
+	UFUNCTION(BlueprintCallable, Category = "User Interface")
+	void StopPlayerRenderTarget();
+
 protected:
 
 	GENERATED_BODY()
@@ -38,18 +46,25 @@ protected:
 	/** Called for side to side input */
 	void MoveRight(float InValue);
 
+	/** Called for sprint down input */
 	void StartSprint();
 
+	/** Called for sprint up input */
 	void StopSprint();
 
+	/** Called for crouch down input */
 	void StartCrouch(); //Todo if pressed in quick succession you should roll and return to previous state
 
+	/** Called for crouch up input */
 	void StopCrouch();
 
+	/** Called for block down input */
 	void StartBlock();
 
+	/** Called for block up input */
 	void StopBlock();
 
+	/** Called for attack down input */
 	void TryAttack();
 
 	/** Called for interaction actions */
@@ -58,12 +73,20 @@ protected:
 	/** Called for interaction actions */
 	void TryCombatLock();
 
+	/** Called for interaction actions */
+	void ToggleInventory();
+
+	/** Called for interaction actions */
+	void ToggleMap();
+
 
 public:
 
+	//The speed the player moves at by default
 	UPROPERTY(EditDefaultsOnly, Category = "Player Stats")
 	float DefaultWalkSpeed = 425;
 
+	//The players speed when sprint key is held
 	UPROPERTY(EditDefaultsOnly, Category = "Player Stats")
 	float SprintSpeed = 630;
 
@@ -84,6 +107,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player Stats", meta = (AllowPrivateAccess = "true"))
 	class UGSPHealthComponent* PlayerHealthComponent;
 
+	/* Player Inventory Component */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player Stats", meta = (AllowPrivateAccess = "true"))
+	class UGSPInventoryComponent* PlayerInventoryComponent;
+
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
@@ -91,5 +118,8 @@ private:
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class USceneCaptureComponent2D* Player3DRenderCamera;
 };
 
