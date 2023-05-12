@@ -72,6 +72,10 @@ void UGSPMasterGameInstance::Shutdown()
 
 void UGSPMasterGameInstance::OnPawnControllerChanged(APawn* InPawn, AController* InController)
 {
+	if(CameraManagerRef == nullptr)
+	{
+		return;
+	}
 	//When the player possesses a new pawn, update the camera manager ref
 	CameraManagerRef = GetFirstLocalPlayerController()->PlayerCameraManager;
 }

@@ -31,6 +31,22 @@ enum class EItemRarity : uint8
 	EXOTIC,
 };
 
+UCLASS()
+class UGSPEquipmentItemBuff : public UPrimaryDataAsset
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditDefaultsOnly)
+	FText BuffName;
+
+
+
+private:
+
+};
+
 /* A read-only container of information about a specific inventory item */
 UCLASS()
 class GAMESTUDIOPROJECT_API UGSPInventoryItem : public UPrimaryDataAsset
@@ -86,7 +102,7 @@ public:
 
 	//The equipment buffs applied to the equipment by default
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item Equipment", meta = (EditCondition = "ItemType != EItemType::InventoryItem ", EditConditionHides))
-	TArray<FText> DefaultBuffs;
+	TArray<UGSPEquipmentItemBuff*> DefaultBuffs;
 
 
 public:
@@ -113,7 +129,7 @@ public:
 	int EquipmentLevel;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Item")
-	TArray<FText> EquipmentBuffs;
+	TArray<UGSPEquipmentItemBuff*> EquipmentBuffs;
 
 };
 
