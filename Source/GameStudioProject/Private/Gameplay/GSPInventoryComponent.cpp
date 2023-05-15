@@ -19,105 +19,130 @@ void UGSPInventoryComponent::BeginPlay()
 
 bool UGSPInventoryComponent::AddInventoryItem(FInventoryItemInst InItem)
 {
-	if (!InItem.EquipmentDataAsset)
+	if (!InItem.DataAsset || InItem.DataAsset->ItemCategory != EItemCategory::Item)
 	{
 		return false;
 	}
 
-	switch (InItem.EquipmentDataAsset->ItemType)
+	AddedItem = true;
+
+	//Find the item type in the inventory item map
+	auto& a = InventoryItemsMap.FindOrAdd(InItem.DataAsset->ItemType);
+
+	//Add the item to an existing stack
+	for (FInventoryItemInst& Item : a)
 	{
-	case EItemCategory::Artifact:
-		ArtifactsArray.Add(InItem);
-		break;
-	case EItemCategory::CraftingResource:
-		CraftingResourcesArray.Add(InItem);
-		break;
-	default:
-		break;
+		if(Item.DataAsset->ItemName.ToString() == InItem.DataAsset->ItemName.ToString())
+		{
+			Item.CurrentStackSize += InItem.CurrentStackSize;
+			return true;
+		}
 	}
+
+	//Add the item to a new stack
+	a.Add(InItem);
 
 	return true;
 }
 
 bool UGSPInventoryComponent::AddEquipmentItem(FEquipmentItemInst InEquipment)
 {
-	if (!InEquipment.EquipmentDataAsset)
+
+	if (!InEquipment.EquipmentDataAsset || InEquipment.EquipmentDataAsset->ItemCategory != EItemCategory::Equipment)
+	{
+		return false;
+	}
+	AddedEquipment = true;
+
+	auto& a = EquipmentItemsMap.FindOrAdd(InEquipment.EquipmentDataAsset->EquipmentType);
+
+	a.Add(InEquipment);
+
+	return true;
+}
+
+bool UGSPInventoryComponent::RemoveInventoryItem(FInventoryItemInst InItem)
+{
+	auto a = InventoryItemsMap.Find(InItem.DataAsset->ItemType);
+
+	if(!a)
 	{
 		return false;
 	}
 
-	switch (InEquipment.EquipmentDataAsset->ItemType)
+	a->Remove(InItem);
+
+
+	return true;
+}
+
+bool UGSPInventoryComponent::RemoveInventoryEquipment(FEquipmentItemInst InEquipment)
+{
+
+	auto a = EquipmentItemsMap.Find(InEquipment.EquipmentDataAsset->EquipmentType);
+
+	if (!a)
 	{
-	case EItemCategory::Axe:
-		AxesArray.Add(InEquipment);
-		break;
-	case EItemCategory::Spear:
-		SpearsArray.Add(InEquipment);
-		break;
-	case EItemCategory::Sword:
-		SwordsArray.Add(InEquipment);
-		break;
-	case EItemCategory::Helmet:
-		HelmetsArray.Add(InEquipment);
-		break;
-	case EItemCategory::ChestPlate:
-		ChestplatesArray.Add(InEquipment);
-		break;
-	default:
-		break;
+		return false;
 	}
+
+	a->Remove(InEquipment);
 
 	return true;
 }
 
 
-
-bool UGSPInventoryComponent::GetInventoryItems(EItemCategory InItemCategory, TArray<FInventoryItemInst>& OutItems)
+bool UGSPInventoryComponent::GetInventoryItems(EItemType InItemType, TArray<FInventoryItemInst>& OutItems)
 {
-	bool bValid = true; //Todo remove dumb check
+	OutItems.Empty();
 
-	switch (InItemCategory)
+	if(InItemType == EItemType::ALL)
 	{
-	case EItemCategory::Artifact:
-		OutItems = ArtifactsArray;
-		break;
-	case EItemCategory::CraftingResource:
-		OutItems = CraftingResourcesArray;
-		break;
-	default:
-		bValid = false;
+		for (const auto& ItemArray : InventoryItemsMap)
+		{
+			OutItems += ItemArray.Value;
+		}
+		return true;
 	}
 
-	return bValid;
-}
+	auto a = InventoryItemsMap.Find(InItemType);
 
-bool UGSPInventoryComponent::GetEquipmentItems(EItemCategory InItemCategory, TArray<FEquipmentItemInst>& OutItems)
-{
-	bool bValid = true;
-
-	switch (InItemCategory)
+	if (!a)
 	{
-	case EItemCategory::Spear:
-		OutItems = SpearsArray;
-		break;
-	case EItemCategory::Sword:
-		OutItems = SwordsArray;
-		break;
-	case EItemCategory::Axe:
-		OutItems = AxesArray;
-		break;
-	case EItemCategory::Helmet:
-		OutItems = HelmetsArray;
-		break;
-	case EItemCategory::ChestPlate:
-		OutItems = ChestplatesArray;
-		break;
-	default:
-		bValid = false;
+		return false;
 	}
 
-	return bValid;
+	OutItems = *a;
+
+	return true;
 }
+
+bool UGSPInventoryComponent::GetEquipmentItems(EEquipmentType InEquipmentType, TArray<FEquipmentItemInst>& OutItems)
+{
+	OutItems.Empty();
+
+	if (InEquipmentType == EEquipmentType::ALL)
+	{
+		for (const auto& EquipmentArray : EquipmentItemsMap)
+		{
+			OutItems += EquipmentArray.Value;
+		}
+		return true;
+	}
+
+	auto a = EquipmentItemsMap.Find(InEquipmentType);
+
+	if(!a)
+	{
+		return false;
+	}
+
+	OutItems = *a;
+
+	return true;
+}
+
+
 
 
 

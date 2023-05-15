@@ -3,22 +3,37 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "GSPInventoryItem.generated.h"
+
 
 //The category of item
 UENUM(BlueprintType)
 enum class EItemCategory : uint8
 {
-	Artifact           UMETA(ToolTip="A non-equipable artifact, apperais in menu 'items' page."), 
-	CraftingResource   UMETA(ToolTip="A non-equipable crafting resource, apperais in menu 'items' page."), 
-	Sword              UMETA(ToolTip="An equipable sword, apperais in menu 'weapons' page."), 
-	Spear              UMETA(ToolTip="An equipable spear, apperais in menu 'weapons' page."), 
-	Axe                UMETA(ToolTip="An equipable axe, apperais in menu 'weapons' page."), 
-	Helmet             UMETA(ToolTip="An equipable helemt pice, apperais in menu 'armour' page."),
-	ChestPlate         UMETA(ToolTip="An equipable chestplate pice, apperais in menu 'armour' page.")
+	Equipment           UMETA(ToolTip = "An equipable."),
+	Item   UMETA(ToolTip = "A non-equipable."),
 };
 
+//The category of item
+UENUM(BlueprintType)
+enum class EItemType : uint8
+{
+	Artifact           UMETA(ToolTip="A non-equipable artifact, apperais in menu 'items' page."), 
+	CraftingResource   UMETA(ToolTip="A non-equipable crafting resource, apperais in menu 'items' page."),
+	ALL
+};
+
+//The category of item
+UENUM(BlueprintType)
+enum class EEquipmentType : uint8
+{
+	Sword              UMETA(ToolTip = "An equipable sword, apperais in menu 'weapons' page."),
+	Spear              UMETA(ToolTip = "An equipable spear, apperais in menu 'weapons' page."),
+	Axe                UMETA(ToolTip = "An equipable axe, apperais in menu 'weapons' page."),
+	Helmet             UMETA(ToolTip = "An equipable helemt pice, apperais in menu 'armour' page."),
+	ChestPlate         UMETA(ToolTip = "An equipable chestplate pice, apperais in menu 'armour' page."),
+	ALL
+};
 
 //The items rarity
 UENUM(BlueprintType)
@@ -57,9 +72,15 @@ public:
 
 	/* Generic item attributes */
 
-	//What is the use of the item
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
-	TEnumAsByte<EItemCategory> ItemType;
+	TEnumAsByte<EItemCategory> ItemCategory;
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (EditCondition = "ItemCategory == EItemCategory::Item ", EditConditionHides))
+	TEnumAsByte<EItemType> ItemType;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (EditCondition = "ItemCategory == EItemCategory::Equipment ", EditConditionHides))
+	TEnumAsByte<EEquipmentType> EquipmentType;
 
 	//The items display name
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
@@ -82,26 +103,26 @@ public:
 	UStaticMesh* ItemMesh;
 
 	//If the inventory item is stack-able
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (EditCondition = "ItemType == EItemType::InventoryItem ", EditConditionHides))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (EditCondition = "ItemCategory == EItemCategory::Item", EditConditionHides))
 	bool IsStackable = true;
 
 	//The max stack size for the inventory item
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (EditCondition = "IsStackable == true", EditConditionHides))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (EditCondition = "ItemCategory == EItemCategory::Item && IsStackable == true", EditConditionHides))
 	int MaxStackSize = 999;
 
 	/* Equipable  items */
 
 
 	//The base damage inflicted by the weapon
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item Equipment", meta = (EditCondition = "ItemType == EItemType::Weapon ", EditConditionHides))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (EditCondition = "ItemCategory == EItemCategory::Equipment ", EditConditionHides))
 	int BaseDamage;
 
 	//The base defense value of the armour 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item Equipment", meta = (EditCondition = "ItemType == EItemType::Armour ", EditConditionHides))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (EditCondition = "ItemCategory == EItemCategory::Equipment ", EditConditionHides))
 	int BaseDefense;
 
 	//The equipment buffs applied to the equipment by default
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item Equipment", meta = (EditCondition = "ItemType != EItemType::InventoryItem ", EditConditionHides))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (EditCondition = "ItemCategory == EItemCategory::Equipment ", EditConditionHides))
 	TArray<UGSPEquipmentItemBuff*> DefaultBuffs;
 
 
@@ -122,6 +143,11 @@ struct FEquipmentItemInst
 
 public:
 
+	FORCEINLINE bool operator== (const FEquipmentItemInst& Other)
+	{
+		return EquipmentDataAsset == Other.EquipmentDataAsset && EquipmentLevel == Other.EquipmentLevel && EquipmentBuffs == Other.EquipmentBuffs;
+	}
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Item")
 	UGSPInventoryItem* EquipmentDataAsset;
 
@@ -140,8 +166,13 @@ struct FInventoryItemInst
 
 public:
 
+	FORCEINLINE bool operator== (const FInventoryItemInst& Other)
+	{
+		return DataAsset == Other.DataAsset && CurrentStackSize == Other.CurrentStackSize;
+	}
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory Item")
-	UGSPInventoryItem* EquipmentDataAsset;
+	UGSPInventoryItem* DataAsset;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory Item")
 	int CurrentStackSize;

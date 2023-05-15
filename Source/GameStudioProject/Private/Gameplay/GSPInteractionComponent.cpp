@@ -1,11 +1,7 @@
 // Game Studio Project Team F 2023 - Laurence Bosier
 
-
 #include "Gameplay/GSPInteractionComponent.h"
-
 #include "GameCore/GSPMasterGameInstance.h"
-#include "GameFramework/Character.h"
-#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
 #include <GameCore/GSPFunctionLibrary.h>
@@ -68,7 +64,7 @@ bool UGSPInteractionComponent::TryInteractWith()
 	return false;
 }
 
-bool UGSPInteractionComponent::IsPlayerObserving(FVector InCameraLocation, FVector InCameraForwardVector) const 
+bool UGSPInteractionComponent::IsPlayerObserving(FVector InCameraLocation, FVector InCameraForwardVector) 
 {
 	FVector NormalizedLoc = (InteractionRadiusCollider->GetComponentToWorld().GetLocation() - InCameraLocation);
 
@@ -76,8 +72,15 @@ bool UGSPInteractionComponent::IsPlayerObserving(FVector InCameraLocation, FVect
 
 	const int Angle = FMath::Acos(FMath::Abs(FVector::DotProduct(NormalizedLoc, InCameraForwardVector))) * 100;
 
+	const bool WasObserved = Angle < (LookAngleTolerance + 1);
+
+	if(!WasObserved)
+	{
+		OnInteractionFocusLost.Broadcast();
+	}
+
 	//Return true if the players view angle is less than the allowed view distance
-	return Angle < (LookAngleTolerance + 1);
+	return WasObserved;
 }
 
 void UGSPInteractionComponent::OnBeginInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -88,12 +91,16 @@ void UGSPInteractionComponent::OnBeginInteractionOverlap(UPrimitiveComponent* Ov
 		return;
 	}
 
+
 	MasterGameInstanceRef->AddOverlappedInteractionComponent(this);
 }
 
 void UGSPInteractionComponent::OnEndInteractionOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+
+	OnInteractionFocusLost.Broadcast();
+
 	if(!MasterGameInstanceRef)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Interaction Component: No valid master game insatnce!"));

@@ -26,10 +26,31 @@ public:
 	bool AddEquipmentItem(FEquipmentItemInst InEquipment);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory Access")
-	bool GetInventoryItems(EItemCategory InItemCategory, TArray<FInventoryItemInst>& OutItems);
+	bool RemoveInventoryItem(FInventoryItemInst InItem);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory Access")
-	bool GetEquipmentItems(EItemCategory InItemCategory, TArray<FEquipmentItemInst>& OutItems);
+	bool RemoveInventoryEquipment(FEquipmentItemInst InEquipment);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory Access")
+	bool GetInventoryItems(EItemType InItemType, TArray<FInventoryItemInst>& OutItems);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory Access")
+	bool GetEquipmentItems(EEquipmentType InEquipmentType, TArray<FEquipmentItemInst>& OutItems);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory Access")
+	bool HasNewInventoryItem() const { return AddedItem;  }
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory Access")
+	bool HasNewInventoryEquipment() const { return AddedEquipment; }
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory Access")
+	void ClearHasNewInventoryEquipment() { AddedEquipment = false; }
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory Access")
+	void ClearHasNewInventoryItem() { AddedItem = false; }
+
+
+public:
 
 	UPROPERTY(EditAnywhere, Category = "Inventory Defaults")
 	TArray<FInventoryItemInst> DefaultInventoryItems;
@@ -42,13 +63,9 @@ protected:
 
 	/* Item Containers */
 
-	TArray<FInventoryItemInst> CraftingResourcesArray;
-	TArray<FInventoryItemInst> ArtifactsArray;
+	TMap<EItemType, TArray<FInventoryItemInst>> InventoryItemsMap;
+	bool AddedItem = false;
 
-	TArray<FEquipmentItemInst> SwordsArray;
-	TArray<FEquipmentItemInst> AxesArray;
-	TArray<FEquipmentItemInst> SpearsArray;
-
-	TArray<FEquipmentItemInst> ChestplatesArray;
-	TArray<FEquipmentItemInst> HelmetsArray;
+	TMap<EEquipmentType, TArray<FEquipmentItemInst>> EquipmentItemsMap;
+	bool AddedEquipment = false;
 };
