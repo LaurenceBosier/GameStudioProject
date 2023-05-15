@@ -52,7 +52,7 @@ public:
 	 * @return True if the player is looking at the owned actor 
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Interaction Component")
-	bool IsPlayerObserving(FVector InCameraLocation, FVector InCameraForwardVector) const;
+	bool IsPlayerObserving(FVector InCameraLocation, FVector InCameraForwardVector);
 
 protected:
 
@@ -132,6 +132,8 @@ private:
 
 	DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE(FOnLastInteractionSignature,  UGSPInteractionComponent, OnLastInteraction);
 
+	DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE(FOnInteractionFocusLostSignature,  UGSPInteractionComponent, OnInteractionFocusLost);
+
 	/* End Declare dynamic multi-cast delegates */
 
 public:
@@ -145,6 +147,10 @@ public:
 	//OnLastInteraction Delegate, called when the final interaction is called. 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction Component")
 	FOnLastInteractionSignature OnLastInteraction;
+
+	//OnLastInteraction Delegate, called when the final interaction is called. 
+	UPROPERTY(BlueprintAssignable, Category = "Interaction Component")
+	FOnInteractionFocusLostSignature OnInteractionFocusLost;
 
 	/* End Functions bound in blueprints */
 
