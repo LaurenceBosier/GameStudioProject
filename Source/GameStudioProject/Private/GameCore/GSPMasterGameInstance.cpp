@@ -1,7 +1,6 @@
 // Game Studio Project Team F 2023 - Laurence Bosier
 
 #include "GameCore/GSPMasterGameInstance.h"
-
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Gameplay/GSPInteractionComponent.h"
@@ -12,6 +11,7 @@
 void UGSPMasterGameInstance::Init()
 {
 
+	//Event callback for on pawn possess, used to get the player camera manager
 	OnPawnControllerChangedDelegates.AddUniqueDynamic(this, &UGSPMasterGameInstance::OnPawnControllerChanged);
 
 	Super::Init();
@@ -72,8 +72,16 @@ void UGSPMasterGameInstance::Shutdown()
 
 void UGSPMasterGameInstance::OnPawnControllerChanged(APawn* InPawn, AController* InController)
 {
-	//When the player possesses a new pawn, update the camera manager ref
-	CameraManagerRef = GetFirstLocalPlayerController()->PlayerCameraManager;
+	//Return if the pawn is not controlled by the player
+	if(!InPawn->IsPlayerControlled())
+	{
+		return;
+	}
+	if(GetFirstLocalPlayerController()->PlayerCameraManager)
+	{
+		//When the player possesses a new pawn, update the camera manager ref
+		CameraManagerRef = GetFirstLocalPlayerController()->PlayerCameraManager;
+	}
 }
 
 void UGSPMasterGameInstance::AddPlayerXP(int InXpAmount, EXpAwardType InUserInterfacePrompt)
@@ -143,6 +151,7 @@ void UGSPMasterGameInstance::AddOverlappedInteractionComponent(UGSPInteractionCo
 {
 	IntractableComponents.AddUnique(InInteractionComponent);
 
+
 	//Check if world is valid
 	if(GetWorld())
 	{
@@ -181,12 +190,13 @@ void UGSPMasterGameInstance::RemoveOverlappedInteractionComponent(UGSPInteractio
 void UGSPMasterGameInstance::ToggleInventory()
 {
 
+	//Return if the menu HUD instance is invalid
 	if (!GameMenuHUDInst || !GetWorld())
 	{
 		return;
 	}
 
-
+	//Get a ref to the player controller 
 	APlayerController* pcRef = UGameplayStatics::GetPlayerController(GetWorld(),0);
 
 	if (!pcRef)
@@ -221,26 +231,32 @@ void UGSPMasterGameInstance::ToggleInventory()
 
 void UGSPMasterGameInstance::InteractionObservationTick()
 {
+
+	if(!GetWorld())
+	{
+		return;
+	}
+
 	//Return if there are no components to check 
-	if(IntractableComponents.IsEmpty() || !GetWorld())
+	if(IntractableComponents.IsEmpty())
 	{
 		//Remove interaction pop-up
 		OnRemoveInteractionPopup();
 
-		//Check if world is valid
-		if(GetWorld())
+
+		
+		//If the timer is running, stop the tick timer
+		if(GetWorld()->GetTimerManager().IsTimerActive(InteractionTickHandle))
 		{
-			//If the timer is running, stop the tick timer
-			if(GetWorld()->GetTimerManager().IsTimerActive(InteractionTickHandle))
-			{
-				GetWorld()->GetTimerManager().ClearTimer(InteractionTickHandle);
-			}
+			GetWorld()->GetTimerManager().ClearTimer(InteractionTickHandle);
 		}
+		
 		//Cancel out of function
 		return;
 	}
 
-	if(IsValid(CameraManagerRef))
+
+	if(CameraManagerRef)
 	{
 		//Loop through all overlapped components
 		for (const auto& IntractableComponent : IntractableComponents)
@@ -249,6 +265,7 @@ void UGSPMasterGameInstance::InteractionObservationTick()
 			{
 				continue;
 			}
+
 			//If a components is being observed return
 			if(IntractableComponent->IsPlayerObserving(CameraManagerRef->GetCameraLocation(), CameraManagerRef->GetActorForwardVector()))
 			{
@@ -259,7 +276,7 @@ void UGSPMasterGameInstance::InteractionObservationTick()
 		}
 	}
 
-	//If no components where observed start the prompt to remove the interaction pop-up 
+	//If no components where observed remove the interaction pop-up 
 	OnRemoveInteractionPopup();
 }
 
@@ -274,7 +291,6 @@ bool UGSPMasterGameInstance::LevelUp(int InOverflowXp, EXpAwardType InUserInterf
 	{
 		return true;
 	}
-
 
 	//Find the next amount of required XP 
 	RequiredXpForLevelUp = static_cast<int>(XPLevelUpCurve->GetFloatValue(CurrentPlayerLevel));
