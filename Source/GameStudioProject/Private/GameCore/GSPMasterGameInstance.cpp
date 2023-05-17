@@ -86,15 +86,17 @@ void UGSPMasterGameInstance::OnPawnControllerChanged(APawn* InPawn, AController*
 
 void UGSPMasterGameInstance::AddPlayerXP(int InXpAmount, EXpAwardType InUserInterfacePrompt)
 {
-	OnGainXp(InXpAmount);
 
 	if((CurrentPlayerXP + InXpAmount) >= RequiredXpForLevelUp)
 	{
 		LevelUp((CurrentPlayerXP + InXpAmount) - RequiredXpForLevelUp);
+		OnGainXp(InXpAmount);
 		return;
 	}
 
 	CurrentPlayerXP += InXpAmount;
+
+	OnGainXp(InXpAmount);
 }
 
 bool UGSPMasterGameInstance::TryCreateGamePlayHUDWidget()
