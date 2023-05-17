@@ -102,6 +102,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	UStaticMesh* ItemMesh;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (EditCondition = "ItemCategory == EItemCategory::Equipment", EditConditionHides))
+	FTransform SpawnOffset;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (EditCondition = "ItemCategory == EItemCategory::Equipment", EditConditionHides))
+	float PickupScale = 1.0f;
+
 	//If the inventory item is stack-able
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (EditCondition = "ItemCategory == EItemCategory::Item", EditConditionHides))
 	bool IsStackable = true;
@@ -156,6 +162,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Item")
 	TArray<UGSPEquipmentItemBuff*> EquipmentBuffs;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Item")
+	bool IsEquipped = false;
 
 };
 
