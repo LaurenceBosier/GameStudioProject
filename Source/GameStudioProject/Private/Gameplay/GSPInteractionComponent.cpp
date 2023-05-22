@@ -36,12 +36,16 @@ void UGSPInteractionComponent::BeginPlay()
 
 void UGSPInteractionComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
-	InteractionRadiusCollider->UnregisterComponent();
-	GetOwner()->RemoveOwnedComponent(InteractionRadiusCollider);
-	if (MasterGameInstanceRef)
+	if(IsValid(InteractionRadiusCollider))
 	{
-		MasterGameInstanceRef->RemoveOverlappedInteractionComponent(this);
+		InteractionRadiusCollider->UnregisterComponent();
+		GetOwner()->RemoveOwnedComponent(InteractionRadiusCollider);
+		if (MasterGameInstanceRef)
+		{
+			MasterGameInstanceRef->RemoveOverlappedInteractionComponent(this);
+		}
 	}
+	
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
 }
 
