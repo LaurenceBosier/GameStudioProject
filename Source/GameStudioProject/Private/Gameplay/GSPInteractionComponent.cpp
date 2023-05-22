@@ -23,9 +23,12 @@ void UGSPInteractionComponent::BeginPlay()
 	//Create interaction overlap collider
 	RegisterCollisionComponent();
 
+	InteractionRadiusCollider->SetHiddenInGame(false);
+
+
 #if WITH_EDITOR
 
-	InteractionRadiusCollider->SetHiddenInGame(!bDebugShowInteractionRadius);
+	InteractionRadiusCollider->SetHiddenInGame(bDebugShowInteractionRadius);
 
 #endif
 
@@ -33,8 +36,13 @@ void UGSPInteractionComponent::BeginPlay()
 
 void UGSPInteractionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+
 	InteractionRadiusCollider->UnregisterComponent();
 	GetOwner()->RemoveOwnedComponent(InteractionRadiusCollider);
+	if (MasterGameInstanceRef)
+	{
+		MasterGameInstanceRef->RemoveOverlappedInteractionComponent(this);
+	}
 
 	Super::EndPlay(EndPlayReason);
 }

@@ -245,7 +245,6 @@ void UGSPMasterGameInstance::InteractionObservationTick()
 		//Remove interaction pop-up
 		OnRemoveInteractionPopup();
 
-
 		
 		//If the timer is running, stop the tick timer
 		if(GetWorld()->GetTimerManager().IsTimerActive(InteractionTickHandle))

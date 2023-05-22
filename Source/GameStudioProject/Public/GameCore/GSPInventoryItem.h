@@ -132,8 +132,6 @@ public:
 	TArray<UGSPEquipmentItemBuff*> DefaultBuffs;
 
 
-public:
-
 	//Append Items to the asset id 
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override
 	{
@@ -154,7 +152,7 @@ public:
 		return EquipmentDataAsset == Other.EquipmentDataAsset && EquipmentLevel == Other.EquipmentLevel && EquipmentBuffs == Other.EquipmentBuffs;
 	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Item")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Item", meta = (IgnoreForMemberInitializationTest))
 	UGSPInventoryItem* EquipmentDataAsset;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Item")
@@ -180,7 +178,7 @@ public:
 		return DataAsset == Other.DataAsset && CurrentStackSize == Other.CurrentStackSize;
 	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory Item")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory Item", meta = (IgnoreForMemberInitializationTest))
 	UGSPInventoryItem* DataAsset;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory Item")
