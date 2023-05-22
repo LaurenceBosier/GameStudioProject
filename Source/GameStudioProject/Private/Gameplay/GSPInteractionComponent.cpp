@@ -34,17 +34,15 @@ void UGSPInteractionComponent::BeginPlay()
 
 }
 
-void UGSPInteractionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void UGSPInteractionComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
-
 	InteractionRadiusCollider->UnregisterComponent();
 	GetOwner()->RemoveOwnedComponent(InteractionRadiusCollider);
 	if (MasterGameInstanceRef)
 	{
 		MasterGameInstanceRef->RemoveOverlappedInteractionComponent(this);
 	}
-
-	Super::EndPlay(EndPlayReason);
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
 }
 
 bool UGSPInteractionComponent::TryInteractWith()
