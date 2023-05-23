@@ -39,6 +39,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Health Component")
 	bool AddHealth(int InHealthToAdd);
 
+	UFUNCTION(BlueprintCallable, Category = "Health Component")
+	void Respawn(int InHealthToAdd);
+
 	/**
 	 * @brief Updates if the actor is currently invincible
 	 * @param InNewInvincibleState True if the actor should be made invincible

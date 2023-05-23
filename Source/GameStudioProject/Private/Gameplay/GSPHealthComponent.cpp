@@ -68,6 +68,12 @@ bool UGSPHealthComponent::AddHealth(int InHealthToAdd)
 	return false;
 }
 
+void UGSPHealthComponent::Respawn(int InHealthToAdd)
+{
+	bIsDead = false;
+	AddHealth(MaxHealth - CurrentHealth);
+}
+
 void UGSPHealthComponent::SetInvincibility(bool InNewInvincibleState)
 {
 	bInvincible = InNewInvincibleState;

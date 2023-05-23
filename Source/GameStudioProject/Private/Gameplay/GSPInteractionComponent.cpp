@@ -23,12 +23,12 @@ void UGSPInteractionComponent::BeginPlay()
 	//Create interaction overlap collider
 	RegisterCollisionComponent();
 
-	InteractionRadiusCollider->SetHiddenInGame(false);
+	InteractionRadiusCollider->SetHiddenInGame(true);
 
 
 #if WITH_EDITOR
 
-	InteractionRadiusCollider->SetHiddenInGame(bDebugShowInteractionRadius);
+	InteractionRadiusCollider->SetHiddenInGame(!bDebugShowInteractionRadius);
 
 #endif
 
